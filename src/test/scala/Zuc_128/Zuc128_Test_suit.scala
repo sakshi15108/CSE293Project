@@ -20,7 +20,7 @@ object zuc128_ScalaModelTestData {
     0x5acd781f, 0x47af136b, 0x326bc4da, 0x0e9af16b, 0x58de26fb, 0x3dbc4dd8, 0x22f89ac7, 0x2dc7ac66)
 
   /*LFSR-state after completion of the initialisation mode:*/
-  val LFSR_post_init :Seq[BigInt] = Seq(0x10da5941, 0x5b6acbf6, 0x17060ce1, 0x35368174, 0xf4385a, 0x479943df, 0x2753bab2, 0x73775d6a,
+  val LFSR_post_init :Seq[BigInt] = Seq(0x10da5941, 0x5b6acbf6, 0x17060ce1, 0x35368174, 0x5cf4385a, 0x479943df, 0x2753bab2, 0x73775d6a,
     0x43930a37, 0x77b4af31, 0x15b2e89f, 0x24ff6e20, 0x740c40b9, 0x026a5503, 0x194b2a57, 0x7a9a1cff)
 
   val R1_post_init = 0x860a7dfa
@@ -40,15 +40,19 @@ class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
     assert(zuc128_model.LFSR_S == zuc128_ScalaModelTestData.LFSR_post_init)
   }
   "F_R(1) value after the initialization mode. TC:3" in {
+    zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
     assert(zuc128_model.F_R(0) == zuc128_ScalaModelTestData.R1_post_init)
   }
   "F_R(2) value after the initialization mode. TC:3" in {
+    zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
     assert(zuc128_model.F_R(1) == zuc128_ScalaModelTestData.R2_post_init)
   }
   "W value after the initialization mode. TC:3" in {
-    assert(zuc128_model.F() == zuc128_ScalaModelTestData.W_post_init)
+    zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
+    assert(zuc128_model.w == zuc128_ScalaModelTestData.W_post_init)
   }
   "Keystream generated. TC:3" in {
+    zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
     assert(zuc128_model.GenerateKeystream(1) == zuc128_ScalaModelTestData.Z_post_gen)
   }
 }
