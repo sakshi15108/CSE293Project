@@ -8,13 +8,13 @@ import scala.collection.mutable.ArrayBuffer
 
 object zuc128_model {
   /*LSFR state registers*/
-  var LFSR_S: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(16)(0)
+  var LFSR_S: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
 
   /* the registers of F */
   var F_R: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(2)(0)
 
   /* the outputs of BitReorganization */
-  var BRC_X: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
+  var BRC_X: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(4)(BigInt(0))
 
   /* the s-boxes */
   implicit def int2Byte(i: Int) = i.toByte
@@ -51,19 +51,19 @@ object zuc128_model {
   val MASK = 0x7FFFFFFF
 
   /* c = a + b mod (2^31 – 1) */
-  def AddM(a: Int, b: Int): Int = {
+  def AddM(a: BigInt, b: BigInt): BigInt = {
     var c = a + b
     (c & MASK) + (c >> 31)
   }
 
-  def MulByPow2(x: Int, k: Int): Int = {
+  def MulByPow2(x: BigInt, k: Int): BigInt = {
     ((((x) << k) | ((x) >> (31 - k))) & MASK)
   }
 
   /* LFSR with initialization mode */
-  def LFSRWithInitialisationMode(u: Int) = {
-    var f: Int = 0
-    var v: Int = 0
+  def LFSRWithInitialisationMode(u: BigInt) = {
+    var f: BigInt = 0
+    var v: BigInt = 0
 
     f = LFSR_S(0)
     v = MulByPow2(LFSR_S(0), 8);
@@ -87,8 +87,8 @@ object zuc128_model {
 
   /* LFSR with work mode */
   def LFSRWithWorkMode() = {
-    var f: Int = 0
-    var v: Int = 0
+    var f: BigInt = 0
+    var v: BigInt = 0
     f = LFSR_S(0);
     v = MulByPow2(LFSR_S(0), 8);
     f = AddM(f, v);
@@ -116,15 +116,15 @@ object zuc128_model {
     BRC_X(3) = ((LFSR_S(2) & 0xFFFF) << 16) | (LFSR_S(0) >> 15);
   }
 
-  def ROT(a: Int, k: Int): Int = {
+  def ROT(a: BigInt, k: Int): BigInt = {
     (a << k) | (a >> (32 - k))
   }
 
-  def L1(x: Int): Int = {
+  def L1(x: BigInt): BigInt = {
     x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24);
   }
 
-  def L2(X: Int): Int = {
+  def L2(X: BigInt): BigInt = {
     X ^ ROT(X, 8) ^ ROT(X, 14) ^ ROT(X, 22) ^ ROT(X, 30)
   }
 
@@ -133,15 +133,16 @@ object zuc128_model {
   }
 
   def F() = {
-    var W, W1, W2, u, v: Int = 0
+    var W, W1, W2: BigInt = 0
+    var  u, v: Int = 0
 
     val MASK1 = 0xFF
 
     W = (BRC_X(0) ^ F_R(1)) + F_R(2);
     W1 = F_R(1) + BRC_X(1);
     W2 = F_R(2) ^ BRC_X(2);
-    u = L1((W1 << 16) | (W2 >> 16));
-    v = L2((W2 << 16) | (W1 >> 16));
+    u = (L1((W1 << 16) | (W2 >> 16))).toInt;
+    v = (L2((W2 << 16) | (W1 >> 16))).toInt
     F_R(1) = MAKEU32(S0(u >> 24), S1(u >> 16) & MASK1, S0((u >> 8) & MASK1), S1(u & MASK1))
     F_R(2) = MAKEU32(S0(v >> 24), S1(v >> 16) & MASK1, S0((v >> 8) & MASK1), S1(v & MASK1))
     W
@@ -153,7 +154,7 @@ object zuc128_model {
 
 
 
-  def init_LFSR_key_exp (k: Seq[Byte] , iv: Seq[Byte]): ArrayBuffer[Int] = {
+  def init_LFSR_key_exp (k: Seq[Byte] , iv: Seq[Byte]): ArrayBuffer[BigInt] = {
   for (i <- 0 until 16) {
     LFSR_S(i) = MAKEU31(k(i), EK_d(i), iv(i));
   }
@@ -162,7 +163,8 @@ object zuc128_model {
 
   /* initialize */
   def Initialization(k: Seq[Byte] , iv: Seq[Byte]) = {
-    var w, nCount : Int = 0;
+    var w: BigInt = 0;
+    var nCount: Int = 0
     /* expand key */
     init_LFSR_key_exp(k, iv)
     /* set F_R1 and F_R2 to zero */
@@ -180,8 +182,8 @@ object zuc128_model {
     }
   }
 
-  def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[Int] = {
-    var pKeystream: ArrayBuffer[Int] = new ArrayBuffer[Int]() ++ Seq.fill(KeystreamLen)(0)
+  def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[BigInt] = {
+    var pKeystream: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]() ++ Seq.fill(KeystreamLen)(BigInt(0))
     var i: Int = 0;
     {
       BitReorganization();

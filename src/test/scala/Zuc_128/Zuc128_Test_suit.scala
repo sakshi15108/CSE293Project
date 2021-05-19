@@ -9,7 +9,7 @@ import chisel3.tester.experimental.TestOptionBuilder._
 import scala.collection.mutable.ArrayBuffer
 
 
-class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
+object zuc128_ScalaModelTestData {
   implicit def int2Byte(i: Int) : Byte = i.toByte//from: https://stackoverflow.com/questions/48926339/scala-hex-literal-for-bytes
 
 
@@ -27,22 +27,28 @@ class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
   val R2_post_init = 0xbf0e0ffc
 
   val W_post_init = 0xa2ec3df2
-
-  println("1.\n")
-  assert(zuc128_model.init_LFSR_key_exp(key, IV) == LFSR_init)
-  zuc128_model.Initialization(key, IV)
-  println(s"Getting LFSR_S to be: ${zuc128_model.LFSR_S}\n Whereas expected value is: ${LFSR_post_init}")
-  println("2.\n")
-  assert(zuc128_model.LFSR_S == LFSR_post_init)
-  println("3.\n")
-  assert(zuc128_model.F_R(0) == R1_post_init)
-  println("4.\n")
-  assert(zuc128_model.F_R(1) == R2_post_init)
-  println("5.\n")
-  assert(zuc128_model.F() == W_post_init)
-
   val Z_post_gen = 0x14f1c272
-  println("6.\n")
-  assert(zuc128_model.GenerateKeystream(1) == Z_post_gen)
+}
 
+class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
+  "Initial LFSR value for the initialization mode. TC:3" in {
+    assert(zuc128_model.init_LFSR_key_exp(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV) == zuc128_ScalaModelTestData.LFSR_init)
+  }
+  "LFSR value for the POST initialization mode. TC:3" in {
+    zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
+    println(s"Getting LFSR_S to be: ${zuc128_model.LFSR_S}\n Whereas expected value is: ${zuc128_ScalaModelTestData.LFSR_post_init}")
+    assert(zuc128_model.LFSR_S == zuc128_ScalaModelTestData.LFSR_post_init)
+  }
+  "F_R(1) value after the initialization mode. TC:3" in {
+    assert(zuc128_model.F_R(0) == zuc128_ScalaModelTestData.R1_post_init)
+  }
+  "F_R(2) value after the initialization mode. TC:3" in {
+    assert(zuc128_model.F_R(1) == zuc128_ScalaModelTestData.R2_post_init)
+  }
+  "W value after the initialization mode. TC:3" in {
+    assert(zuc128_model.F() == zuc128_ScalaModelTestData.W_post_init)
+  }
+  "Keystream generated. TC:3" in {
+    assert(zuc128_model.GenerateKeystream(1) == zuc128_ScalaModelTestData.Z_post_gen)
+  }
 }
