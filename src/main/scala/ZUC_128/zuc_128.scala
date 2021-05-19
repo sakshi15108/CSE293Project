@@ -12,7 +12,7 @@ object zuc128_model {
   /* the registers of F */
     var F_R: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
   /* the outputs of BitReorganization */
-  var BRC_X: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(4)(BigInt(0))
+  var BRC_X: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
 
   var w: Int = 0;
   /* the s-boxes */
@@ -59,7 +59,7 @@ object zuc128_model {
     ((((x.toInt) << k) | ((x.toInt) >>> (31 - k))) & MASK)
   }
 
-  def getVal(x: BigInt) = {
+  def get_BigInt_Val(x: BigInt) = {
     x
 }
 
@@ -79,11 +79,11 @@ object zuc128_model {
     v = MulByPow2(LFSR_S(15), 15);
     f = AddM(f, v);
     f = AddM(f, u);
-    println(s"f ${f}\n")
+//    println(s"f ${f}\n")
     /* update the state */
     for (i <- 0 until 15) {
       LFSR_S(i) = LFSR_S(i + 1);
-      println(s"LFSR ${LFSR_S(i)}")
+//      println(s"LFSR ${LFSR_S(i)}")
     }
     LFSR_S(15) = f
   }
@@ -113,10 +113,12 @@ object zuc128_model {
 
   /* BitReorganization */
   def BitReorganization() = {
-    BRC_X(0) = ((LFSR_S(15) & 0x7FFF8000) << 1) | (LFSR_S(14) & 0xFFFF);
-    BRC_X(1) = ((LFSR_S(11) & 0xFFFF) << 16) | (LFSR_S(9) >> 15);
-    BRC_X(2) = ((LFSR_S(7) & 0xFFFF) << 16) | (LFSR_S(5) >> 15);
-    BRC_X(3) = ((LFSR_S(2) & 0xFFFF) << 16) | (LFSR_S(0) >> 15);
+    BRC_X(0) = (((LFSR_S(15) & 0x7FFF8000) << 1) | (LFSR_S(14) & 0xFFFF)).toInt;
+    BRC_X(1) = (((LFSR_S(11) & 0xFFFF) << 16) | (LFSR_S(9) >> 15)).toInt;
+    BRC_X(2) = (((LFSR_S(7) & 0xFFFF) << 16) | (LFSR_S(5) >> 15)).toInt;
+    BRC_X(3) = (((LFSR_S(2) & 0xFFFF) << 16) | (LFSR_S(0) >> 15)).toInt;
+//    println("in bit reorganization:\n")
+//    println(s" BRC_X3: ${BRC_X(3)}\n");
   }
 
   def ROT(a: Int, k: Int): Int = {
@@ -196,6 +198,8 @@ object zuc128_model {
     for (i <- 0 until KeystreamLen) {
       BitReorganization();
       pKeystream(i) = F() ^ BRC_X(3);
+//      println(s" value of pKeystream(${i}) = ${pKeystream(i)}")
+//      println(s" BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
       LFSRWithWorkMode();
     }
     pKeystream

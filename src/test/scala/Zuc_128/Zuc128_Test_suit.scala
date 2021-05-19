@@ -27,7 +27,8 @@ object zuc128_ScalaModelTestData {
   val R2_post_init = 0xbf0e0ffc
 
   val W_post_init = 0xa2ec3df2
-  val Z_post_gen = 0x14f1c272
+  val KSlen : Int = 1
+  val Z_post_gen: Seq[BigInt] = Seq(0x14f1c272)
 }
 
 class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
@@ -53,6 +54,6 @@ class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
   }
   "Keystream generated. TC:3" in {
     zuc128_model.Initialization(zuc128_ScalaModelTestData.key, zuc128_ScalaModelTestData.IV)
-    assert(zuc128_model.GenerateKeystream(1) == zuc128_ScalaModelTestData.Z_post_gen)
+    assert(zuc128_model.GenerateKeystream(zuc128_ScalaModelTestData.KSlen) == zuc128_ScalaModelTestData.Z_post_gen)
   }
 }
