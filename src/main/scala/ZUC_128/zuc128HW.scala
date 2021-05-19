@@ -151,38 +151,39 @@ class zuc128(p:zucParams) extends  Module {
 
   /* initialize */
   var nCount: Int = 0
-    /* expand key */
-    for (i <- 0 until 16) {
-      zuc128.LFSR_S(i) := zuc128.MAKEU31(io.key(i), zuc128_model.EK_d(i).asUInt(), io.IV(i));
-    }
-    /* set F_R1 and F_R2 to zero */
-    for (i <- 0 until 2) {
-      zuc128.F_R(i) := 0.U
-    }
-    nCount = 32
-    while (nCount > 0)
-    {
-      zuc128.BitReorganization()
-      zuc128.w = zuc128.F()
-      zuc128.LFSRWithInitialisationMode((zuc128.w >> 1).asUInt())
-      nCount = nCount -1
-    }
+  /* expand key */
+  for (i <- 0 until 16) {
+    zuc128.LFSR_S(i) := zuc128.MAKEU31(io.key(i), zuc128_model.EK_d(i).asUInt(), io.IV(i));
+  }
+  /* set F_R1 and F_R2 to zero */
+  for (i <- 0 until 2) {
+    zuc128.F_R(i) := 0.U
+  }
 
-//Generate keystream:
-    var pKeystream : Vec[UInt] = Reg(Vec(p.KStreamlen, UInt(p.KeyLen.W))) //: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]() ++ Seq.fill(p.KStreamlen)(BigInt(0))
-    var i: Int = 0;
-    {
-      zuc128.BitReorganization();
-      zuc128.F(); /* discard the output of F */
-      zuc128.LFSRWithWorkMode()
-    }
-    for (i <- 0 until p.KStreamlen) {
-      zuc128.BitReorganization();
-      pKeystream(i) :=  zuc128.F() ^  zuc128.BRC_X(3);
-      //      println(s" value of pKeystream(${i}) = ${pKeystream(i)}")
-      //      println(s" BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
-      zuc128.LFSRWithWorkMode();
-    }
+  nCount = 32
+  while (nCount > 0)
+  {
+    zuc128.BitReorganization()
+    zuc128.w = zuc128.F()
+    zuc128.LFSRWithInitialisationMode((zuc128.w >> 1).asUInt())
+    nCount = nCount -1
+  }
+
+  //Generate keystream:
+  var pKeystream : Vec[UInt] = Reg(Vec(p.KStreamlen, UInt(p.KeyLen.W))) //: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]() ++ Seq.fill(p.KStreamlen)(BigInt(0))
+  var i: Int = 0;
+  {
+    zuc128.BitReorganization();
+    zuc128.F(); /* discard the output of F */
+    zuc128.LFSRWithWorkMode()
+  }
+  for (i <- 0 until p.KStreamlen) {
+    zuc128.BitReorganization();
+    pKeystream(i) :=  zuc128.F() ^  zuc128.BRC_X(3);
+    //      println(s" value of pKeystream(${i}) = ${pKeystream(i)}")
+    //      println(s" BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
+    zuc128.LFSRWithWorkMode();
+  }
 
 
 
