@@ -10,22 +10,28 @@ import scala.collection.mutable.ArrayBuffer
 
 class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
 
-  def testZUC128(Key : Seq[UInt], IV : Seq[UInt], keystreamlen : Int , outkeystream : Seq[UInt]): Boolean = {
+  def testZUC128(Key : Seq[UInt], Iv : Seq[UInt], keystreamlen : Int , outkeystream : Seq[UInt]): Boolean = {
+    assert(Key.length == 16)
+    assert(Iv.length == 16)
     val p = zucParams(keystreamlen)
     test(new zuc128(p)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
-      Key.zip(IV) foreach { case (aChunk, bChunk) =>
-        dut.io.key.zip(aChunk).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
-        dut.io.IV.zip(bChunk).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
-      }
+
+      dut.io.in.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
+      dut.io.in.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
+
       //after fisrt clock cycle expecting key/IV to load and R0 and R1 set to 0
       dut.clock.step()
       // check LFSR values after 1 + 32 cycles
-      for(i <- 0 until 33){dut.clock.step()}
+      for(i <- 0 until 32){dut.clock.step()}
       //working stage complete after this clock
       dut.clock.step()
       //compare pkeystream after keystreamlen cycles
-      for(i <- 0 until keystreamlen){dut.clock.step()}
-      dut.io.KeyStream.expect(outkeystream)
+      for(i <- 0 until keystreamlen){
+        dut.io.KeyStream.expect(outkeystream(i))
+        dut.clock.step()
+      }
+
+
     }
     true
   }
