@@ -13,52 +13,49 @@ case class zucParams(KSlen: Int) {
 }
 
 object  zuc128 {
-  val p: zucParams;
+ // val p: zucParams;
+  val LFSR_wordSize = 32
+  val KeyLen = 128
+  val KStreamlen = 1
   /*LSFR state registers*/
-  var LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
+  var LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
   /* the registers of F */
-  var F_R: Vec[UInt] = Reg(Vec(2, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
+  var F_R: Vec[UInt] = Reg(Vec(2, UInt(LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
   /* the outputs of BitReorganization */
-  var BRC_X: Vec[UInt] = Reg(Vec(4, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
+  var BRC_X: Vec[UInt] = Reg(Vec(4, UInt(LFSR_wordSize.W))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
 
+  val S0 = zuc128_model.S0.map(_.U)
+  val S1 = zuc128_model.S1.map(_.U)
   var w: UInt = 0.U;
 
-  /* the s-boxes */
-  // access from zuc128_model
-
-  //val EK_d, MASK: // access from zuc128_model
-
-  /* c = a + b mod (2^31 – 1) */
   def AddM(a: UInt, b: UInt): UInt = {
     var c = a + b
-    (c & zuc128_model.MASK.asUInt()) +& (c >> 31).asUInt()
+    (c(30,0)) +& (c >> 31).asUInt()
   }
 
-
-  def MulByPow2(x: UInt, k: UInt): UInt = {
-    ((x << k) | ((x >> (31 - k))) & zuc128_model.MASK.asUInt())
+  def MulByPow2(x: UInt, k: Int): UInt = {
+    ((x << k) | (x >> (31 - k))(30,0))
   }
 
   def LFSRWithInitialisationMode(u: UInt) = {
     var f: UInt = 0.U
     var v: UInt = 0.U
     f = LFSR_S(0)
-    v = MulByPow2(LFSR_S(0), 8.U);
+    v = MulByPow2(LFSR_S(0), 8);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(4), 20.U);
+    v = MulByPow2(LFSR_S(4), 20);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(10), 21.U);
+    v = MulByPow2(LFSR_S(10), 21);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(13), 17.U);
+    v = MulByPow2(LFSR_S(13), 17);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(15), 15.U);
+    v = MulByPow2(LFSR_S(15), 15);
     f = AddM(f, v);
     f = AddM(f, u);
-    //    println(s"f ${f}\n")
+
     /* update the state */
     for (i <- 0 until 15) {
-      LFSR_S(i) := LFSR_S(i + 1);
-      //      println(s"LFSR ${LFSR_S(i)}")
+      LFSR_S(i) := LFSR_S(i + 1)
     }
     LFSR_S(15) := f
   }
@@ -69,15 +66,15 @@ object  zuc128 {
     var f: UInt = 0.U
     var v: UInt = 0.U
     f = LFSR_S(0);
-    v = MulByPow2(LFSR_S(0), 8.U);
+    v = MulByPow2(LFSR_S(0), 8);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(4), 20.U);
+    v = MulByPow2(LFSR_S(4), 20);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(10), 21.U);
+    v = MulByPow2(LFSR_S(10), 21);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(13), 17.U);
+    v = MulByPow2(LFSR_S(13), 17);
     f = AddM(f, v);
-    v = MulByPow2(LFSR_S(15), 15.U);
+    v = MulByPow2(LFSR_S(15), 15);
     f = AddM(f, v);
 
     /* update the state */
@@ -97,23 +94,21 @@ object  zuc128 {
     //    println(s" BRC_X3: ${BRC_X(3)}\n");
   }
 
-  def ROT(a: UInt, k: UInt): UInt = {
+  def ROT(a: UInt, k: Int): UInt = {
     (a << k) | (a >> (32 - k))
   }
 
   def L1(x: UInt): UInt = {
-
-    x ^ ROT(x, 2.U) ^ ROT(x, 10.U) ^ ROT(x, 18.U) ^ ROT(x, 24.U);
+    x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24);
   }
 
   def L2(X: UInt): UInt = {
-    X ^ ROT(X, 8.U) ^ ROT(X, 14.U) ^ ROT(X, 22.U) ^ ROT(X, 30.U)
+    X ^ ROT(X, 8) ^ ROT(X, 14) ^ ROT(X, 22) ^ ROT(X, 30)
   }
 
-  def MAKEU32(a:Int, b: Int, c: Int, d: Int): UInt = {
-    ((a << 24) | (b << 16) | (c << 8) | (d)).asUInt
+  def MAKEU32(a:UInt, b: UInt, c: UInt, d: UInt): UInt = {
+    ((a << 24) | (b << 16) | (c << 8) | (d))
   }
-
 
   def F():UInt= {
     var W, W1, W2: UInt = 0.U
@@ -122,10 +117,10 @@ object  zuc128 {
     W = ((BRC_X(0) ^ F_R(0)) + F_R(1))
     W1 = (F_R(0) + BRC_X(1))
     W2 = (F_R(1) ^ BRC_X(2))
-    u = (L1((W1 << 16) | (W2 >> 16)))
-    v = (L2((W2 << 16) | (W1 >> 16)))
-    F_R(0) := MAKEU32(zuc128_model.S0(u >>> 24), zuc128_model.S1((u >>> 16) & MASK1), zuc128_model.S0((u >>> 8) & MASK1), zuc128_model.S1(u & MASK1))
-    F_R(1) := MAKEU32(zuc128_model.S0(v >>> 24), zuc128_model.S1((v >>> 16) & MASK1), zuc128_model.S0((v >>> 8) & MASK1), zuc128_model.S1(v & MASK1))
+    u = (L1((W1 << 16) | (W2 >> 16))).litValue().toInt
+    v = (L2((W2 << 16) | (W1 >> 16))).litValue().toInt
+    F_R(0) := MAKEU32(S0((u >>> 24)),S1((u >>> 16) & MASK1), S0((u >>> 8) & MASK1), S1(u & MASK1))
+    F_R(1) := MAKEU32(S0(v >>> 24), S1((v >>> 16) & MASK1), S0((v >>> 8) & MASK1), S1(v & MASK1))
     //    println(p" value of F_R0 ${F_R(0)}")
     //    println(p" value of F_R1 ${F_R(1)}")
     W
@@ -138,7 +133,6 @@ object  zuc128 {
 }
 
 class zuc128IO(p: zucParams) extends Bundle {
-//  require (p.msgLen == 128, "FUTURE: accept msgLen != 128B")
 //val key = Flipped(Decoupled(UInt((p.KeyLen).W))) //FIXME
   val key = Input(UInt((p.KeyLen).W))
   val IV = Input(UInt(p.KeyLen.W))
@@ -183,7 +177,4 @@ class zuc128(p:zucParams) extends  Module {
       //      println(s" BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
       zuc128.LFSRWithWorkMode();
     }
-
-
-
 }
