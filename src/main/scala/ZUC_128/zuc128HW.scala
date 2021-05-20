@@ -270,11 +270,61 @@ class zuc128(p:zucParams) extends  Module {
   }
 
 
-
+/////////////////////////////////////////////////////////////////CLASS part:
   val io = IO(new zuc128IO(p))
 
   /* initialize */
   /* expand key */
+  val started = RegInit(false.B)
+  when(!started) {
+    for (i <- 0 until 16) {
+      LFSR_S(i) := MAKEU31(io.in.key(i), zuc128_model.EK_d(i).asUInt(), io.in.IV(i));
+    }
+    /* set F_R1 and F_R2 to zero */
+    for (i <- 0 until 2) {
+      F_R(i) := 0.U
+    }
+    started := true.B
+  }
+
+
+  val nCount = RegInit(32.U)
+  val InitFIN = RegInit(false.B)
+  when (nCount > 0.U && started)
+  { BitReorganization()
+    w := F()
+    LFSRWithInitialisationMode((w >> 1).asUInt())
+    printf(p"During IS @${nCount}: BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
+    nCount := nCount -1.U
+  } .otherwise {
+    InitFIN := true.B
+    //    nCount := 32.U
+  }
+  printf(p"During IS @${nCount}: BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
+
+  //Generate keystream:
+  val Wdiscarded = RegInit(false.B)
+  when( InitFIN) {
+    BitReorganization();
+    F(); /* discard the output of F */
+    LFSRWithWorkMode()
+    Wdiscarded := true.B
+  }
+
+  //  val (KS_len_i, KS_end) = Counter(0 until p.KStreamlen, Wdiscarded)
+  val i = RegInit(0.U)
+  when (i < p.KStreamlen.U && Wdiscarded) {//<- 0 until p.KStreamlen) {
+    BitReorganization();
+    io.KeyStream :=  F() ^  BRC_X(3);
+    printf(p"Output value at clock ${i} is ${io.KeyStream}\n")
+    //    println(s"After WS: BRC_X0: ${zuc128.BRC_X(0)},BRC_X1: ${zuc128.BRC_X(1)},BRCX_2: ${zuc128.BRC_X(2)}, BRC_X3: ${zuc128.BRC_X(3)},FR0: ${zuc128.F_R(0)},FR1: ${zuc128.F_R(1)}\n");
+    LFSRWithWorkMode();
+    //    io.KeyStream := zuc128.pKeystream(i)
+    i := i + 1.U
+  } .otherwise {
+    i := 0.U
+    io.KeyStream := 0.U
+  }
  /* val IS_count = RegInit(0.U)
   when(IS_count <= 1.U) {
     for (i <- 0 until 16) {
@@ -328,54 +378,5 @@ class zuc128(p:zucParams) extends  Module {
     i := 0.U
   }
 */
-  val started = RegInit(false.B)
-  when(!started) {
-    for (i <- 0 until 16) {
-      LFSR_S(i) := MAKEU31(io.in.key(i), zuc128_model.EK_d(i).asUInt(), io.in.IV(i));
-    }
-    /* set F_R1 and F_R2 to zero */
-    for (i <- 0 until 2) {
-      F_R(i) := 0.U
-    }
-    started := true.B
-  }
 
-
-  val nCount = RegInit(32.U)
-  val InitFIN = RegInit(false.B)
-  when (nCount > 0.U && started)
-  { BitReorganization()
-    w := F()
-    LFSRWithInitialisationMode((w >> 1).asUInt())
-    printf(p"During IS @${nCount}: BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
-    nCount := nCount -1.U
-  } .otherwise {
-    InitFIN := true.B
-//    nCount := 32.U
-  }
-  printf(p"During IS @${nCount}: BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
-
-  //Generate keystream:
-  val Wdiscarded = RegInit(false.B)
-  when( InitFIN) {
-    BitReorganization();
-    F(); /* discard the output of F */
-    LFSRWithWorkMode()
-    Wdiscarded := true.B
-  }
-
-  //  val (KS_len_i, KS_end) = Counter(0 until p.KStreamlen, Wdiscarded)
-  val i = RegInit(0.U)
-  when (i < p.KStreamlen.U && Wdiscarded) {//<- 0 until p.KStreamlen) {
-    BitReorganization();
-    io.KeyStream :=  F() ^  BRC_X(3);
-    printf(p"Output value at clock ${i} is ${io.KeyStream}\n")
-    //    println(s"After WS: BRC_X0: ${zuc128.BRC_X(0)},BRC_X1: ${zuc128.BRC_X(1)},BRCX_2: ${zuc128.BRC_X(2)}, BRC_X3: ${zuc128.BRC_X(3)},FR0: ${zuc128.F_R(0)},FR1: ${zuc128.F_R(1)}\n");
-    LFSRWithWorkMode();
-    //    io.KeyStream := zuc128.pKeystream(i)
-    i := i + 1.U
-  } .otherwise {
-    i := 0.U
-    io.KeyStream := 0.U
-  }
 }
