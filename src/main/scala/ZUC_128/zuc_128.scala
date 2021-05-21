@@ -78,7 +78,9 @@ object zuc128_model {
     f = AddM(f, v);
     v = MulByPow2(LFSR_S(15), 15);
     f = AddM(f, v);
+    println(s"u before AddM: ${u}")
     f = AddM(f, u);
+    println(s"f after AddM: ${f}")
 //    println(s"f ${f}\n")
     /* update the state */
     for (i <- 0 until 15) {
@@ -113,7 +115,10 @@ object zuc128_model {
 
   /* BitReorganization */
   def BitReorganization() = {
+    println(s"((LFSR_S(15)  ): ${(LFSR_S(15) )}\n")
+
     BRC_X(0) = (((LFSR_S(15) & 0x7FFF8000) << 1) | (LFSR_S(14) & 0xFFFF)).toInt;
+    println(s"BRC_X(0): ${BRC_X(0)}")
     BRC_X(1) = (((LFSR_S(11) & 0xFFFF) << 16) | (LFSR_S(9) >> 15)).toInt;
     BRC_X(2) = (((LFSR_S(7) & 0xFFFF) << 16) | (LFSR_S(5) >> 15)).toInt;
     BRC_X(3) = (((LFSR_S(2) & 0xFFFF) << 16) | (LFSR_S(0) >> 15)).toInt;
@@ -122,11 +127,14 @@ object zuc128_model {
   }
 
   def ROT(a: Int, k: Int): Int = {
+//    println(s"(a << k): ${(a << k)}")
+//    println(s"(a >>> (32 - k)): ${(a >>> (32 - k))}")
     (a << k) | (a >>> (32 - k))
   }
 
   def L1(x: Int): Int = {
-
+//    println(s"x:${x} ^ ROT(x, 2):${ROT(x, 2)} ^ ROT(x, 10) : ${ROT(x, 10)}^ ROT(x, 18): ${ROT(x, 18)} ^ ROT(x, 24): ${ROT(x, 24)}")
+//    println(s"complete: ${x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24)} ")
     x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24);
   }
 
@@ -145,12 +153,17 @@ object zuc128_model {
     W = ((BRC_X(0) ^ F_R(0)) + F_R(1)).toInt
     W1 = (F_R(0) + BRC_X(1)).toInt
     W2 = (F_R(1) ^ BRC_X(2)).toInt
+//    println(s" (W1 << 16): ${(W1 << 16)}\n")
+//    println(s" (W2 >>> 16): ${(W2 >>> 16)}\n")
+//    println(s"Input of L1: ${(W1 << 16) | (W2 >>> 16)}")
+
     u = (L1((W1 << 16) | (W2 >>> 16)))
+//    println(s"u: ${u}\n")
     v = (L2((W2 << 16) | (W1 >>> 16)))
+//    println(s"v: ${v}")
     F_R(0) = MAKEU32(S0(u >>> 24).toInt, S1((u >>> 16) & MASK1), S0((u >>> 8) & MASK1), S1(u & MASK1))
     F_R(1) = MAKEU32(S0(v >>> 24), S1((v >>> 16) & MASK1), S0((v >>> 8) & MASK1), S1(v & MASK1))
-//    println(p" value of F_R0 ${F_R(0)}")
-//    println(p" value of F_R1 ${F_R(1)}")
+//    println(s" value of F_R0 ${F_R(0)}, F_R1 ${F_R(1)}, BRC_X(0): ${BRC_X(0)}")
     W
   }
 
@@ -181,8 +194,14 @@ object zuc128_model {
     while (nCount > 0)
     {
       BitReorganization()
+//      println(s"@${nCount}\n")
+//      println(s"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
+
       w = F()
+      println(s"w: ${w}, and w>>>1: ${w>>>1}\n")
       LFSRWithInitialisationMode(w >>> 1)
+//      println(s"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
+
       nCount = nCount -1
     }
   }

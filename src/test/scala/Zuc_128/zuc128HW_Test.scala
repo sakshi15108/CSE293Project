@@ -23,7 +23,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
 
       println(" After 1st clock expecting key/IV to load and R0 and R1 set to 0 ")
       // check LFSR values after 1 + 32 cycles
-      for(i <- 0 until 3){dut.clock.step()}
+      for(i <- 0 until 32){dut.clock.step()}
 
       println(" After 32 clocks of init mode ")
       //working stage complete after this clock
