@@ -68,7 +68,7 @@ class zuc128(p:zucParams) extends  Module {
   BRC_X := VecInit(Seq.fill(4)(0.S))
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
-  var w: SInt = 0.S
+  var w: SInt = WireInit(0.S)
 
   def LFSRWithInitialisationMode(u: UInt) = {
     var f: UInt = 0.U
