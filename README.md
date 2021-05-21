@@ -29,7 +29,10 @@ The basic working algorithm has been [implemented in Chisel](https://github.com/
 If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Tester -- -t "<name of the test>"``. For example: ``testOnly ZUC_128.ZUC_128_ModelTester -- -t "Hardware ZUC128 should generate correct keystream for Test Vector 1"``will run [a test for test case 1](https://github.com/sakshi15108/CSE293Project/blob/27ac44f4a0284a8d5d15e276e60407ee0dc4ef92/src/test/scala/Zuc_128/zuc128HW_Test.scala#L43).
 
 
-References:
+**References:**
+
 [1] Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 1: 128-EEA3 and 128-EIA3 Specifications.
+
 [2] Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 2: ZUC Specification.
+
 [3] Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 3: Implementor’s Test Data
