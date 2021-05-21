@@ -59,7 +59,7 @@ class zuc128(p:zucParams) extends  Module {
   /* the registers of F */
   val F_R: Vec[UInt] = Reg(Vec(2, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
   /* the outputs of BitReorganization */
-  val BRC_X: Vec[UInt] = Reg(Vec(4, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
+  val BRC_X: Vec[SInt] = Reg(Vec(4, SInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
   val w = RegInit(0.U);
@@ -110,23 +110,28 @@ class zuc128(p:zucParams) extends  Module {
 
   /* BitReorganization */
   def BitReorganization(): Unit = {
-    BRC_X(0) := ((LFSR_S(15) & 0x7FFF8000.U) << 1) | (LFSR_S(14) & 0xFFFF.U);
-    BRC_X(1) := (((LFSR_S(11) & 0xFFFF.U) << 16) | (LFSR_S(9) >> 15));
-    BRC_X(2) := (((LFSR_S(7) & 0xFFFF.U) << 16) | (LFSR_S(5) >> 15));
-    BRC_X(3) := (((LFSR_S(2) & 0xFFFF.U) << 16) | (LFSR_S(0) >> 15));
+    BRC_X(0) := ((LFSR_S(15) & 0x7FFF8000.U).asSInt() << 1) | (LFSR_S(14) & 0xFFFF.U).asSInt();
+    BRC_X(1) := ((LFSR_S(11) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(9) >> 15).asSInt()
+    BRC_X(2) := ((LFSR_S(7) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(5) >> 15).asSInt()
+    BRC_X(3) := ((LFSR_S(2) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(0) >> 15).asSInt()
   }
 
   def F(): UInt = {
-    var W, W1, W2: UInt = 0.U
-    var u, v: UInt = 0.U
+    var  W1 = 0.S
+    var  W2 = 0.U
+    var u, v = 0.U
     val MASK1 = 0xFF.U
-    W1 = (F_R(0) + BRC_X(1))
-    W2 = (F_R(1) ^ BRC_X(2))
-    u = (zuc128.L1((W1 << 16) | (W2 >> 16)))
-    v = (zuc128.L2((W2 << 16) | (W1 >> 16)))
-    F_R(0) := zuc128.MAKEU32(S0(u >> 24), S1((u >> 16) & MASK1), S0((u >> 8) & MASK1), S1(u & MASK1))
-    F_R(1) := zuc128.MAKEU32(S0(v >> 24), S1((v >> 16) & MASK1), S0((v >> 8) & MASK1), S1(v & MASK1))
-    ((BRC_X(0) ^ F_R(0)) + F_R(1))
+    printf(p"Priting w @starting: ${((BRC_X(0).asUInt() ^ F_R(0)) + F_R(1))}\n")
+    printf(p"FR0: ${F_R(0)}, FR0 asSInt: ${F_R(0).asSInt()}, BRCX1: ${BRC_X(1)}\n")
+    W1 = F_R(0).asSInt() + BRC_X(1)
+    printf(p"W1: ${W1}\n")
+    W2 = F_R(1) ^ BRC_X(2).asUInt()
+    u = (zuc128.L1((W1.asUInt() << 16) | (W2 >> 16)))
+    v = (zuc128.L2((W2 << 16) | (W1.asUInt() >> 16)))
+    F_R(0) := zuc128.MAKEU32(S0((u >> 24).asUInt()), S1((u >> 16)(7,0)), S0((u >> 8)(7, 0)), S1(u (7, 0)))
+    F_R(1) := zuc128.MAKEU32(S0((v >> 24).asUInt()), S1((v >> 16)(7, 0)), S0((v >> 8)(7, 0)), S1(v (7, 0)))
+    printf(p"Priting w @END: ${((BRC_X(0).asUInt() ^ F_R(0)) + F_R(1))}\n")
+    ((BRC_X(0).asUInt() ^ F_R(0)) + F_R(1))
   }
 
   val state = RegInit(zuc128.idle)
@@ -149,15 +154,16 @@ class zuc128(p:zucParams) extends  Module {
     is(zuc128.initMode) {
       val nCount = RegInit(32.U)
       when(nCount > 0.U && state === zuc128.initMode) {
-        for (i <- 0 until 16) {
-          printf(p" LFSR ${LFSR_S(i)}\n")
-        }
+//        for (i <- 0 until 16) {
+//          printf(p" LFSR ${LFSR_S(i)}\n")
+//        }
         BitReorganization()
-        printf(p"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
+//        printf(p"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
+        printf(p"@${nCount}\n")
         w := F()
         LFSRWithInitialisationMode((w >> 1).asUInt())
-        printf(p"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
-        printf(p"W: ${w}\n")
+//        printf(p"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
+//        printf(p"W: ${w}\n")
         nCount := nCount - 1.U
       }
       when(nCount === 0.U) {
@@ -178,7 +184,7 @@ class zuc128(p:zucParams) extends  Module {
       val i = RegInit(0.U)
       when(i < p.KStreamlen.U && state === zuc128.genKeystream) {
         BitReorganization();
-        io.KeyStream := F() ^ BRC_X(3);
+        io.KeyStream := F() ^ BRC_X(3).asUInt();
         printf(p"Output value at clock ${i} is ${io.KeyStream}\n")
         LFSRWithWorkMode()
         i := i + 1.U
