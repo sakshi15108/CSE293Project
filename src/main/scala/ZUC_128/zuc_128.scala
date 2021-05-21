@@ -153,17 +153,10 @@ object zuc128_model {
     W = ((BRC_X(0) ^ F_R(0)) + F_R(1)).toInt
     W1 = (F_R(0) + BRC_X(1)).toInt
     W2 = (F_R(1) ^ BRC_X(2)).toInt
-//    println(s" (W1 << 16): ${(W1 << 16)}\n")
-//    println(s" (W2 >>> 16): ${(W2 >>> 16)}\n")
-//    println(s"Input of L1: ${(W1 << 16) | (W2 >>> 16)}")
-
     u = (L1((W1 << 16) | (W2 >>> 16)))
-//    println(s"u: ${u}\n")
     v = (L2((W2 << 16) | (W1 >>> 16)))
-//    println(s"v: ${v}")
     F_R(0) = MAKEU32(S0(u >>> 24).toInt, S1((u >>> 16) & MASK1), S0((u >>> 8) & MASK1), S1(u & MASK1))
     F_R(1) = MAKEU32(S0(v >>> 24), S1((v >>> 16) & MASK1), S0((v >>> 8) & MASK1), S1(v & MASK1))
-//    println(s" value of F_R0 ${F_R(0)}, F_R1 ${F_R(1)}, BRC_X(0): ${BRC_X(0)}")
     W
   }
 
@@ -194,14 +187,12 @@ object zuc128_model {
     while (nCount > 0)
     {
       BitReorganization()
-//      println(s"@${nCount}\n")
-//      println(s"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
-
+      println(s"@${nCount}\n")
+      println(s"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
+      println(s"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
       w = F()
       println(s"w: ${w}, and w>>>1: ${w>>>1}\n")
       LFSRWithInitialisationMode(w >>> 1)
-//      println(s"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
-
       nCount = nCount -1
     }
   }
@@ -217,8 +208,6 @@ object zuc128_model {
     for (i <- 0 until KeystreamLen) {
       BitReorganization();
       pKeystream(i) = F() ^ BRC_X(3);
-//      println(s" value of pKeystream(${i}) = ${pKeystream(i)}")
-//      println(s" BRC_X0: ${BRC_X(0)},BRC_X1: ${BRC_X(1)},BRCX_2: ${BRC_X(2)}, BRC_X3: ${BRC_X(3)},FR0: ${F_R(0)},FR1: ${F_R(1)}\n");
       LFSRWithWorkMode();
     }
     pKeystream

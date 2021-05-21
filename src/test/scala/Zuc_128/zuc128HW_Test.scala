@@ -61,10 +61,4 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     testZUC128(key, IV,1,outkeystream)
   }
 
-  "Hardware ZUC128 should generate correct keystream for Test Vector 4" in {
-    val key = zuc128_ScalaModelTestData4.key.map(_.U)
-    val IV = zuc128_ScalaModelTestData4.IV.map(_.U)
-    val outkeystream = zuc128_ScalaModelTestData4.Z_post_gen.map(_.U)
-    testZUC128(key, IV,1,outkeystream)
-  }
 }

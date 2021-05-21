@@ -18,14 +18,9 @@ object  zuc128 {
     ((x << k) | (x >> (31 - k))) & zuc128_model.MASK.asUInt()
   }
   def ROT(a: SInt, k: Int): SInt = {
-//    printf(p"(a << k)(31,0): ${(a << k)(31,0)} where K:${k}\n")
-//    printf(p"(a >> (32 - k)): ${(a >> (32 - k)).asUInt()}\n")
     (((a << k)(31,0)) | (a >> (32 - k)).asUInt()).asSInt()
   }
   def L1(x: UInt): SInt = {
-//    printf(p"x:${x} ^ ROT(x, 2):${ROT(x.asSInt(), 2)} ^ ROT(x, 10) : ${ROT(x.asSInt(), 10)}^ ROT(x, 18): ${ROT(x.asSInt(), 18)} ^ ROT(x, 24): ${ROT(x.asSInt(), 24)}\n")
-//    printf(p"complete: ${x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24)} \n")
-//    printf(p"complete .asSInt(): ${(x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24)).asSInt()} \n")
     (x.asSInt() ^ ROT(x.asSInt(), 2) ^ ROT(x.asSInt(), 10) ^ ROT(x.asSInt(), 18) ^ ROT(x.asSInt(), 24))
   }
   def L2(X: UInt): SInt = {
@@ -38,7 +33,6 @@ object  zuc128 {
     ((a << 23) | (b << 8) | c).asUInt()
   }
 }
-
 case class zucParams(KSlen: Int) {
   val LFSR_wordSize = 32
   val keys_num = 16
@@ -68,7 +62,7 @@ class zuc128(p:zucParams) extends  Module {
   BRC_X := VecInit(Seq.fill(4)(0.S))
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
-  var w: SInt = WireInit(0.S)
+  val w: SInt = WireInit(0.S)
 
   def LFSRWithInitialisationMode(u: UInt) = {
     var f: UInt = 0.U
@@ -131,20 +125,13 @@ class zuc128(p:zucParams) extends  Module {
     var  W2 = 0.S(32.W)
     var u, v = 0.S(32.W)
     W1 = F_R(0) + BRC_X(1)
-//    printf(p" (W1 << 16)asUInt: ${(W1 << 16).asUInt() (31,0)}\n")
     W2 = F_R(1) ^ BRC_X(2)
-//    printf(p" and (W2 >> 16).asUInt(): ${(W2 >> 16).asUInt() }\n")
-//    printf(p"Input of L1: ${(W1 << 16).asUInt() (31,0) | (W2 >> 16).asUInt()}\n")
     u = (zuc128.L1((W1 << 16).asUInt() (31,0) | (W2 >> 16).asUInt()))
-//    printf(p"u: ${u}\n")
     v = (zuc128.L2((W2 << 16).asUInt()(31,0)  | (W1 >> 16).asUInt()))
-//        printf(p"v: ${v}\n")
-
     F_R(0) := (zuc128.MAKEU32(S0((u >> 24).asUInt()), S1((u >> 16)(7,0)), S0((u >> 8)(7, 0)), S1(u (7, 0)))).asSInt()
     F_R(1) := (zuc128.MAKEU32(S0((v >> 24).asUInt()), S1((v >> 16)(7, 0)), S0((v >> 8)(7, 0)), S1(v (7, 0)))).asSInt()
-//    printf(p" value of F_R0 ${F_R(0)}, F_R1 ${F_R(1)}, BRC_X(0): ${BRC_X(0)}\n")
     BRC_X(0) ^ (zuc128.MAKEU32(S0((u >> 24).asUInt()), S1((u >> 16)(7,0)), S0((u >> 8)(7, 0)), S1(u (7, 0)))).asSInt() +& (zuc128.MAKEU32(S0((v >> 24).asUInt()), S1((v >> 16)(7, 0)), S0((v >> 8)(7, 0)), S1(v (7, 0)))).asSInt()
-//    (BRC_X(0) ^ F_R(0)) + F_R(1)
+    ((BRC_X(0) ^ F_R(0)) + F_R(1))
   }
 
   val state = RegInit(zuc128.idle)
@@ -157,14 +144,11 @@ class zuc128(p:zucParams) extends  Module {
       for (i <- 0 until 16) {
         LFSR_S(i) := zuc128.MAKEU31(io.in.key(i), zuc128_model.EK_d(i).asUInt(), io.in.IV(i));
       }
-//      BitReorganization()
       /* set F_R1 and F_R2 to zero */
       for (i <- 0 until 2) {
         F_R(i) := 0.S
       }
-
       state := zuc128.initMode
-//      printf(p" AT state initmode created initial LFSR and set R0 and R1 to zero \n")
     }
     is(zuc128.initMode) {
       val nCount = RegInit(32.U)
@@ -173,13 +157,12 @@ class zuc128(p:zucParams) extends  Module {
 //          printf(p" LFSR ${LFSR_S(i)}\n")
 //        }
         BitReorganization()
-//        printf(p"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
-//        printf(p"@${nCount}\n")
-        w = F()
+        printf(p"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
+        printf(p"@${nCount}\n")
+        w := F()
         printf(p"w: ${w}, and w>>1: ${w>>1}\n")
         LFSRWithInitialisationMode((w >> 1).asUInt())
-//        printf(p"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
-        printf(p"W: ${w}\n")
+        printf(p"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
         nCount := nCount - 1.U
       }
       when(nCount === 0.U) {
