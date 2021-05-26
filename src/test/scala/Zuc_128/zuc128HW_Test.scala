@@ -17,14 +17,16 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     test(new zuc128(p)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       dut.clock.step() // idle state of hardware
-      dut.io.in.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
-      dut.io.in.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
+      dut.io.in.valid.poke(true.B)
+      dut.clock.step()
+      dut.io.in.bits.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
+      dut.io.in.bits.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
       dut.clock.step()
 
       println(" After 1st clock expecting key/IV to load and R0 and R1 set to 0 ")
       // check LFSR values after 1 + 32 cycles
       for(i <- 0 until 32){dut.clock.step()}
-
+      dut.io.KeyStream.valid.expect(false.B)
       println(" After 32 clocks of init mode ")
       //working stage complete after this clock
       dut.clock.step()
@@ -32,9 +34,9 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
       //compare pkeystream after keystreamlen cycles
       for(i <- 0 until keystreamlen){
         dut.clock.step()
-        dut.io.KeyStream.expect(outkeystream(i))
+        dut.io.KeyStream.bits.expect(outkeystream(i))
+        dut.io.KeyStream.valid.expect(true.B)
       }
-
 
     }
     true

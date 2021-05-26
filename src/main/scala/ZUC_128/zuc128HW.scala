@@ -41,11 +41,11 @@ case class zucParams(KSlen: Int) {
 }
 
 class zuc128IO(p: zucParams) extends Bundle {
-  val in = Input(new Bundle() {
+  val in = Flipped(Decoupled(new Bundle() {
   val key = Vec(p.keys_num, UInt((p.KeyLen).W))
   val IV = Vec(p.keys_num, UInt((p.KeyLen).W))
-  })
-  val KeyStream = Output(SInt(p.LFSR_wordSize.W))
+  }))
+  val KeyStream = Decoupled(SInt(p.LFSR_wordSize.W))
   override def cloneType = (new zuc128IO(p)).asInstanceOf[this.type]
 }
 
@@ -135,14 +135,20 @@ class zuc128(p:zucParams) extends  Module {
   }
 
   val state = RegInit(zuc128.idle)
-  io.KeyStream := 0.S
+  io.KeyStream.valid := false.B
+  io.in.ready := true.B
+  io.KeyStream.bits := 0.S
   switch(state) {
     is(zuc128.idle) {
-      state := zuc128.loadKey
+      when(io.in.ready && io.in.valid) {
+        state := zuc128.loadKey
+      } .otherwise {
+        state := zuc128.idle
+      }
     }
     is(zuc128.loadKey) {
       for (i <- 0 until 16) {
-        LFSR_S(i) := zuc128.MAKEU31(io.in.key(i), zuc128_model.EK_d(i).asUInt(), io.in.IV(i));
+        LFSR_S(i) := zuc128.MAKEU31(io.in.bits.key(i), zuc128_model.EK_d(i).asUInt(), io.in.bits.IV(i));
       }
       /* set F_R1 and F_R2 to zero */
       for (i <- 0 until 2) {
@@ -183,8 +189,9 @@ class zuc128(p:zucParams) extends  Module {
       val i = RegInit(0.U)
       when(i < p.KStreamlen.U && state === zuc128.genKeystream) {
         BitReorganization();
-        io.KeyStream := F() ^ BRC_X(3)
-        printf(p"Output value at clock ${i} is ${io.KeyStream}\n")
+        io.KeyStream.bits := F() ^ BRC_X(3)
+        io.KeyStream.valid := true.B
+        printf(p"Output value at clock ${i} is ${io.KeyStream.bits}\n")
         LFSRWithWorkMode()
         i := i + 1.U
       }
