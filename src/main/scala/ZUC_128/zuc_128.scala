@@ -197,8 +197,8 @@ object zuc128_model {
     }
   }
 
-  def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[BigInt] = {
-    var pKeystream: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]() ++ Seq.fill(KeystreamLen)(BigInt(0))
+  def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[Int] = {
+    var pKeystream: ArrayBuffer[Int] = new ArrayBuffer[Int]() ++ Seq.fill(KeystreamLen)(0)
     var i: Int = 0;
     {
       BitReorganization();
