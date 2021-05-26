@@ -45,7 +45,7 @@ class zuc128IO(p: zucParams) extends Bundle {
   val key = Vec(p.keys_num, UInt((p.KeyLen).W))
   val IV = Vec(p.keys_num, UInt((p.KeyLen).W))
   })
-  val KeyStream = Output(UInt(p.LFSR_wordSize.W))
+  val KeyStream = Output(SInt(p.LFSR_wordSize.W))
   override def cloneType = (new zuc128IO(p)).asInstanceOf[this.type]
 }
 
@@ -135,7 +135,7 @@ class zuc128(p:zucParams) extends  Module {
   }
 
   val state = RegInit(zuc128.idle)
-  io.KeyStream := 0.U
+  io.KeyStream := 0.S
   switch(state) {
     is(zuc128.idle) {
       state := zuc128.loadKey
@@ -183,7 +183,7 @@ class zuc128(p:zucParams) extends  Module {
       val i = RegInit(0.U)
       when(i < p.KStreamlen.U && state === zuc128.genKeystream) {
         BitReorganization();
-        io.KeyStream := (F() ^ BRC_X(3)).asUInt();
+        io.KeyStream := F() ^ BRC_X(3)
         printf(p"Output value at clock ${i} is ${io.KeyStream}\n")
         LFSRWithWorkMode()
         i := i + 1.U
