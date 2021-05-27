@@ -22,9 +22,11 @@ object zuc128_ScalaModelTestData1{
     0x32b433fc, 0x231ea13f, 0x31711e42,0x4ccce955, 0x3fb6071e, 0x161d3512, 0x7114b136, 0x5154d452,
     0x78c69a74, 0x4f26ba6b, 0x3e1b8d6a)
 
+  /** F_R1 and F_R2 values after Initialization mode */
   val R1_post_init = 0x14cfd44c
   val R2_post_init = 0x8c6de800
 
+  /** W value after Initialization mode */
   val W_post_init = 0x1b85d1e6
   /**Key Stream Length*/
   val KSlen : Int = 32
@@ -47,9 +49,11 @@ object zuc128_ScalaModelTestData2{
     0x443cf9cd, 0x6a4cd899, 0x49e34bd0,0x56130b14, 0x20e8f24c, 0x7a5b1dcc, 0x0c3cc2d1, 0x1cc082c8,
     0x7f5904a2, 0x55b61ce8, 0x1fe46106)
 
+  /** F_R1 and F_R2 values after Initialization mode */
   val R1_post_init = 0xb8017bd5
   val R2_post_init = 0x9ce2de5c
 
+  /** W value after Initialization mode */
   val W_post_init = 0xfce125a7
   /**Key Stream Length*/
   val KSlen : Int = 32
@@ -68,9 +72,11 @@ object zuc128_ScalaModelTestData3 {
   val LFSR_post_init :Seq[BigInt] = Seq(0x10da5941, 0x5b6acbf6, 0x17060ce1, 0x35368174, 0x5cf4385a, 0x479943df, 0x2753bab2, 0x73775d6a,
     0x43930a37, 0x77b4af31, 0x15b2e89f, 0x24ff6e20, 0x740c40b9, 0x026a5503, 0x194b2a57, 0x7a9a1cff)
 
+  /** F_R1 and F_R2 values after Initialization mode */
   val R1_post_init = 0x860a7dfa
   val R2_post_init = 0xbf0e0ffc
 
+  /** W value after Initialization mode */
   val W_post_init = 0xa2ec3df2
   /**Key Stream Length*/
   val KSlen : Int = 32
@@ -92,9 +98,11 @@ object zuc128_ScalaModelTestData4 {
     0x24334616, 0x4471b734,0x7dba1992, 0x25180096, 0x4637117c, 0x2a92aac8, 0x7da8d7b5,
     0x58f45afe, 0x42814800, 0x56d7e7d8)
 
+  /** F_R1 and F_R2 values after Initialization mode */
   val R1_post_init = 0x52761a25
   val R2_post_init = 0x38f712e1
 
+  /** W value after Initialization mode */
   val W_post_init = 0x20eebfab
   /**Key Stream Length*/
   val KSlen : Int = 32

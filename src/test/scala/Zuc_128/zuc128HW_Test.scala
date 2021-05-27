@@ -16,15 +16,19 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     val p = zucParams(keystreamlen)
     test(new zuc128(p)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
-      dut.clock.step() // idle state of hardware
+      /** Idle state of Hardware */
+      dut.clock.step()
+      /** Providing valid inputs by indicating valid of input as true */
       dut.io.in.valid.poke(true.B)
       dut.clock.step()
+      /** Loading Key and IV inputs to Hardware  */
       dut.io.in.bits.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
       dut.io.in.bits.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
       dut.clock.step()
 
       /**After 1st clock expecting key/IV to load and R0 and R1 set to 0 */
       dut.clock.step(32)
+      /** Expecting output to be not valid after Initialization mode  */
       dut.io.KeyStream.valid.expect(false.B)
       /**working stage complete after this clock*/
       dut.clock.step()
@@ -32,6 +36,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
       for(i <- 0 until keystreamlen){
         dut.clock.step()
         dut.io.KeyStream.bits.expect(outkeystream(i))
+        /** Expecting output to be valid when generating each 32 bit words of KeyStream */
         dut.io.KeyStream.valid.expect(true.B)
       }
 

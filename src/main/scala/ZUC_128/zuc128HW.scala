@@ -11,7 +11,6 @@ object  zuc128 {
   val idle :: loadKey :: initMode :: workMode :: genKeystream :: Nil = Enum(5)
 
   /** Helper functions **/
-
   /* c = a + b mod (2^31 – 1) */
   def AddM(a: UInt, b: UInt): UInt = {
     ((a + b)(30,0)) +& ((a + b) >> 31).asUInt()
@@ -37,6 +36,10 @@ object  zuc128 {
     ((a << 23) | (b << 8) | c).asUInt()
   }
 }
+
+/** Parameters to define the size of Input and Output ports size
+ * can be modified if we need to implement for different Input Key size (ex: 256 bit for ZUC256)
+ * also by providing different KSlen value, KeyStream of that many words can be generated as Output*/
 case class zucParams(KSlen: Int) {
   val LFSR_wordSize = 32
   val keys_num = 16
@@ -44,6 +47,7 @@ case class zucParams(KSlen: Int) {
   val KStreamlen = KSlen
 }
 
+/** Interface definition of ZUC */
 class zuc128IO(p: zucParams) extends Bundle {
   val in = Flipped(Decoupled(new Bundle() {
   val key = Vec(p.keys_num, UInt((p.KeyLen).W))

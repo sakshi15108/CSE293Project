@@ -42,6 +42,7 @@ object zuc128_model {
     0x88, 0xb1, 0x98, 0x7c, 0xf3, 0x3d, 0x60, 0x6c, 0x7b, 0xca, 0xd3, 0x1f, 0x32, 0x65, 0x04, 0x28,
     0x64, 0xbe, 0x85, 0x9b, 0x2f, 0x59, 0x8a, 0xd7, 0xb0, 0x25, 0xac, 0xaf, 0x12, 0x03, 0xe2, 0xf2)
 
+  /** Constant used with key and IV for initializing LSFR*/
   val EK_d: Seq[BigInt] = Seq(0x44D7, 0x26BC, 0x626B, 0x135E, 0x5789, 0x35E2, 0x7135, 0x09AF,
     0x4D78, 0x2F13, 0x6BC4, 0x1AF1, 0x5E26, 0x3C4D, 0x789A, 0x47AC)
 
@@ -115,18 +116,19 @@ object zuc128_model {
     BRC_X(3) = (((LFSR_S(2) & 0xFFFF) << 16) | (LFSR_S(0) >> 15)).toInt;
   }
 
+  /** Function used to calculate L1 and L2 */
   def ROT(a: Int, k: Int): Int = {
     (a << k) | (a >>> (32 - k))
   }
-
+  /** Both L1 and L2 are linear transforms from 32-bit words to 32-bit words */
   def L1(x: Int): Int = {
     x ^ ROT(x, 2) ^ ROT(x, 10) ^ ROT(x, 18) ^ ROT(x, 24);
   }
-
   def L2(X: Int): Int = {
     X ^ ROT(X, 8) ^ ROT(X, 14) ^ ROT(X, 22) ^ ROT(X, 30)
   }
 
+  /** Function used in F to calculate F_R1 and F_R2 */
   def MAKEU32(a: Int, b: Int, c: Int, d: Int): BigInt = {
     (a << 24) | (b << 16) | (c << 8) | (d)
   }
@@ -145,6 +147,7 @@ object zuc128_model {
     W
   }
 
+  /** To calculate pre-initialized LSFR values from key, Ek_d and IV */
   def MAKEU31(a: Int, b: BigInt, c: Int):BigInt = {
     (a << 23) | (b << 8) | c
   }
@@ -196,6 +199,5 @@ object zuc128_model {
     }
     pKeystream
   }
-
 
 }
