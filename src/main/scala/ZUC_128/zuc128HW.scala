@@ -11,8 +11,7 @@ object  zuc128 {
   val idle :: loadKey :: initMode :: workMode :: genKeystream :: Nil = Enum(5)
 
   def AddM(a: UInt, b: UInt): UInt = {
-    var c = a + b
-    (c(30,0)) +& (c >> 31).asUInt()
+    ((a + b)(30,0)) +& ((a + b) >> 31).asUInt()
   }
   def MulByPow2(x: UInt, k: Int): UInt = {
     ((x << k) | (x >> (31 - k))) & zuc128_model.MASK.asUInt()
@@ -58,17 +57,15 @@ class zuc128(p:zucParams) extends  Module {
   /* the registers of F */
   val F_R: Vec[SInt] = Reg(Vec(2, SInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
   /* the outputs of BitReorganization */
-  val BRC_X: Vec[SInt] = Wire(Vec(4, SInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
-  BRC_X := VecInit(Seq.fill(4)(0.S))
+  val BRC_X: Vec[SInt] = WireInit(VecInit(Seq.fill(4)(0.S(p.LFSR_wordSize.W)))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
+//  BRC_X :=
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
   val w: SInt = WireInit(0.S)
 
   def LFSRWithInitialisationMode(u: UInt) = {
-    var f: UInt = 0.U
-    var v: UInt = 0.U
-    f = LFSR_S(0)
-    v = zuc128.MulByPow2(LFSR_S(0), 8);
+    var f = LFSR_S(0)
+    var v = zuc128.MulByPow2(LFSR_S(0), 8);
     f = zuc128.AddM(f, v);
     v = zuc128.MulByPow2(LFSR_S(4), 20);
     f = zuc128.AddM(f, v);
@@ -78,9 +75,7 @@ class zuc128(p:zucParams) extends  Module {
     f = zuc128.AddM(f, v);
     v = zuc128.MulByPow2(LFSR_S(15), 15);
     f = zuc128.AddM(f, v);
-    printf(p"u before AddM: ${u}\n")
     f = zuc128.AddM(f, u);
-    printf(p"f after AddM: ${f}\n")
     /* update the state */
     for (i <- 0 until 15) {
       LFSR_S(i) := LFSR_S(i + 1)
@@ -90,10 +85,8 @@ class zuc128(p:zucParams) extends  Module {
 
   /* LFSR with work mode */
   def LFSRWithWorkMode() = {
-    var f: UInt = 0.U
-    var v: UInt = 0.U
-    f = LFSR_S(0);
-    v = zuc128.MulByPow2(LFSR_S(0), 8);
+    var f = LFSR_S(0);
+    var v = zuc128.MulByPow2(LFSR_S(0), 8);
     f = zuc128.AddM(f, v);
     v = zuc128.MulByPow2(LFSR_S(4), 20);
     f = zuc128.AddM(f, v);
@@ -121,13 +114,13 @@ class zuc128(p:zucParams) extends  Module {
   }
 
   def F(): SInt = {
-    var  W1 = 0.S(32.W)
-    var  W2 = 0.S(32.W)
-    var u, v = 0.S(32.W)
-    W1 = F_R(0) + BRC_X(1)
-    W2 = F_R(1) ^ BRC_X(2)
-    u = (zuc128.L1((W1 << 16).asUInt() (31,0) | (W2 >> 16).asUInt()))
-    v = (zuc128.L2((W2 << 16).asUInt()(31,0)  | (W1 >> 16).asUInt()))
+    val  W1 = WireInit(0.S(32.W))
+    val  W2 = WireInit(0.S(32.W))
+    val u, v = WireInit(0.S(32.W))
+    W1 := F_R(0) + BRC_X(1)
+    W2 := F_R(1) ^ BRC_X(2)
+    u := (zuc128.L1((W1 << 16).asUInt() (31,0) | (W2 >> 16).asUInt()))
+    v := (zuc128.L2((W2 << 16).asUInt()(31,0)  | (W1 >> 16).asUInt()))
     F_R(0) := (zuc128.MAKEU32(S0((u >> 24).asUInt()), S1((u >> 16)(7,0)), S0((u >> 8)(7, 0)), S1(u (7, 0)))).asSInt()
     F_R(1) := (zuc128.MAKEU32(S0((v >> 24).asUInt()), S1((v >> 16)(7, 0)), S0((v >> 8)(7, 0)), S1(v (7, 0)))).asSInt()
     BRC_X(0) ^ (zuc128.MAKEU32(S0((u >> 24).asUInt()), S1((u >> 16)(7,0)), S0((u >> 8)(7, 0)), S1(u (7, 0)))).asSInt() +& (zuc128.MAKEU32(S0((v >> 24).asUInt()), S1((v >> 16)(7, 0)), S0((v >> 8)(7, 0)), S1(v (7, 0)))).asSInt()
@@ -135,9 +128,11 @@ class zuc128(p:zucParams) extends  Module {
   }
 
   val state = RegInit(zuc128.idle)
-  io.KeyStream.valid := false.B
+//  io.KeyStream.valid := false.B
   io.in.ready := true.B
-  io.KeyStream.bits := 0.S
+//  io.KeyStream.bits := 0.S
+  io.KeyStream.noenq()//set valid to false and bits to donot care
+
   switch(state) {
     is(zuc128.idle) {
       when(io.in.ready && io.in.valid) {
