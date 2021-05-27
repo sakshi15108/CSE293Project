@@ -7,9 +7,12 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object  zuc128 {
-
+  /** FSM states **/
   val idle :: loadKey :: initMode :: workMode :: genKeystream :: Nil = Enum(5)
 
+  /** Helper functions **/
+
+  /* c = a + b mod (2^31 – 1) */
   def AddM(a: UInt, b: UInt): UInt = {
     ((a + b)(30,0)) +& ((a + b) >> 31).asUInt()
   }
@@ -19,6 +22,8 @@ object  zuc128 {
   def ROT(a: SInt, k: Int): SInt = {
     (((a << k)(31,0)) | (a >> (32 - k)).asUInt()).asSInt()
   }
+
+  /**Both L1 and L2 are linear transforms from 32-bit words to 32-bit words*/
   def L1(x: UInt): SInt = {
     (x.asSInt() ^ ROT(x.asSInt(), 2) ^ ROT(x.asSInt(), 10) ^ ROT(x.asSInt(), 18) ^ ROT(x.asSInt(), 24))
   }
@@ -52,17 +57,18 @@ class zuc128(p:zucParams) extends  Module {
 
   val io = IO(new zuc128IO(p))
 
-  /*LSFR state registers*/
-  val LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
-  /* the registers of F */
-  val F_R: Vec[SInt] = Reg(Vec(2, SInt(p.LFSR_wordSize.W))) //= (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
-  /* the outputs of BitReorganization */
-  val BRC_X: Vec[SInt] = WireInit(VecInit(Seq.fill(4)(0.S(p.LFSR_wordSize.W)))) //= (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
-//  BRC_X :=
+  /**The 16 Linear Feedback Shift Registers**/
+  val LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(p.LFSR_wordSize.W)))
+  /** the registers of the non linear function F **/
+  val F_R: Vec[SInt] = Reg(Vec(2, SInt(p.LFSR_wordSize.W)))
+  /** the outputs of BitReorganization **/
+  val BRC_X: Vec[SInt] = WireInit(VecInit(Seq.fill(4)(0.S(p.LFSR_wordSize.W))))
+  /** Obtaining S boxes from Scala implementation and mapping them for Chisel implementation**/
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
   val w: SInt = WireInit(0.S)
 
+  /** LFSR with initialization mode **/
   def LFSRWithInitialisationMode(u: UInt) = {
     var f = LFSR_S(0)
     var v = zuc128.MulByPow2(LFSR_S(0), 8);
@@ -76,14 +82,14 @@ class zuc128(p:zucParams) extends  Module {
     v = zuc128.MulByPow2(LFSR_S(15), 15);
     f = zuc128.AddM(f, v);
     f = zuc128.AddM(f, u);
-    /* update the state */
+    /** update the state **/
     for (i <- 0 until 15) {
       LFSR_S(i) := LFSR_S(i + 1)
     }
     LFSR_S(15) := f
   }
 
-  /* LFSR with work mode */
+  /** LFSR with work mode **/
   def LFSRWithWorkMode() = {
     var f = LFSR_S(0);
     var v = zuc128.MulByPow2(LFSR_S(0), 8);
@@ -103,16 +109,18 @@ class zuc128(p:zucParams) extends  Module {
     LFSR_S(15) := f;
   }
 
-  /* BitReorganization */
+  /** BitReorganization
+   * It extracts 128 bits from the cells of the LFSR and forms 4 of 32-bit words,
+   * where the first three words will be used by the nonlinear function F in the bottom layer,
+   * and the last word will be involved in producing the keystream. **/
   def BitReorganization(): Unit = {
-    printf(p"((LFSR_S(15) ): ${LFSR_S(15)}\n")
     BRC_X(0) := ((LFSR_S(15) & 0x7FFF8000.U).asSInt() << 1) | (LFSR_S(14) & 0xFFFF.U).asSInt();
-    printf(p"BRC_X(0): ${BRC_X(0)}\n")
     BRC_X(1) := ((LFSR_S(11) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(9) >> 15).asSInt()
     BRC_X(2) := ((LFSR_S(7) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(5) >> 15).asSInt()
     BRC_X(3) := ((LFSR_S(2) & 0xFFFF.U).asSInt() << 16) | (LFSR_S(0) >> 15).asSInt()
   }
 
+  /**The nonlinear function F has 2 of 32-bit memory cells R1 and R2**/
   def F(): SInt = {
     val  W1 = WireInit(0.S(32.W))
     val  W2 = WireInit(0.S(32.W))
@@ -127,11 +135,10 @@ class zuc128(p:zucParams) extends  Module {
     ((BRC_X(0) ^ F_R(0)) + F_R(1))
   }
 
+  /** Starting FSM */
   val state = RegInit(zuc128.idle)
-//  io.KeyStream.valid := false.B
   io.in.ready := true.B
-//  io.KeyStream.bits := 0.S
-  io.KeyStream.noenq()//set valid to false and bits to donot care
+  io.KeyStream.noenq() //Initialize valid to false and bits to don't care until set to any other value
 
   switch(state) {
     is(zuc128.idle) {
@@ -142,6 +149,7 @@ class zuc128(p:zucParams) extends  Module {
       }
     }
     is(zuc128.loadKey) {
+      /**The key loading procedure will expand the initial key and the initial vector into 16 of 31-bit integers as the initial state of the LFSR.*/
       for (i <- 0 until 16) {
         LFSR_S(i) := zuc128.MAKEU31(io.in.bits.key(i), zuc128_model.EK_d(i).asUInt(), io.in.bits.IV(i));
       }
@@ -152,18 +160,13 @@ class zuc128(p:zucParams) extends  Module {
       state := zuc128.initMode
     }
     is(zuc128.initMode) {
+      /**Then the cipher runs the following operations 32 times*/
       val nCount = RegInit(32.U)
       when(nCount > 0.U && state === zuc128.initMode) {
-//        for (i <- 0 until 16) {
-//          printf(p" LFSR ${LFSR_S(i)}\n")
-//        }
+
         BitReorganization()
-        printf(p"@${nCount}: BRC_X0:${BRC_X(0)}  BRC_X1:${BRC_X(1)}  BRC_X2:${BRC_X(2)}  BRC_X3:${BRC_X(3)}\n")
-        printf(p"@${nCount}\n")
         w := F()
-        printf(p"w: ${w}, and w>>1: ${w>>1}\n")
         LFSRWithInitialisationMode((w >> 1).asUInt())
-        printf(p"FR0:${F_R(0)}  FR1:${F_R(1)}\n");
         nCount := nCount - 1.U
       }
       when(nCount === 0.U) {
@@ -173,20 +176,21 @@ class zuc128(p:zucParams) extends  Module {
       }
     }
     is(zuc128.workMode) {
-      printf(p"At workmode \n ")
+      /**After the initialization stage, the algorithm moves into the working stage.
+       * At the working stage, the algorithm executes the following operations once, and discards the output W of F*/
       BitReorganization()
       F()
       LFSRWithWorkMode()
       state := zuc128.genKeystream
     }
     is(zuc128.genKeystream) {
-      printf(p"At genKeystream")
+      /**Then the algorithm goes into the stage of producing keystream,
+       * i.e., for each iteration, the following operations are executed once, and a 32-bit word Z is produced as an output*/
       val i = RegInit(0.U)
       when(i < p.KStreamlen.U && state === zuc128.genKeystream) {
         BitReorganization();
         io.KeyStream.bits := F() ^ BRC_X(3)
         io.KeyStream.valid := true.B
-        printf(p"Output value at clock ${i} is ${io.KeyStream.bits}\n")
         LFSRWithWorkMode()
         i := i + 1.U
       }

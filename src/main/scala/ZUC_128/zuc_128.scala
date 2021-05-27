@@ -7,11 +7,11 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object zuc128_model {
-  /*LSFR state registers*/
+  /*The 16 Linear Feedback Shift Registers*/
   var LFSR_S: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
-  /* the registers of F */
+  /* the registers of the non linear function F */
     var F_R: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
-  /* the outputs of BitReorganization */
+  /* the outputs of BitReorganization stage*/
   var BRC_X: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
 
   var w: Int = 0;
@@ -107,7 +107,10 @@ object zuc128_model {
     LFSR_S(15) = f;
   }
 
-  /* BitReorganization */
+  /* BitReorganization
+  * It extracts 128 bits from the cells of the LFSR and forms 4 of 32-bit words,
+  * where the first three words will be used by the nonlinear function F in the bottom layer,
+  * and the last word will be involved in producing the keystream. */
   def BitReorganization() = {
 
     BRC_X(0) = (((LFSR_S(15) & 0x7FFF8000) << 1) | (LFSR_S(14) & 0xFFFF)).toInt;
@@ -131,7 +134,7 @@ object zuc128_model {
   def MAKEU32(a: Int, b: Int, c: Int, d: Int): BigInt = {
     (a << 24) | (b << 16) | (c << 8) | (d)
   }
-
+  /*The nonlinear function F has 2 of 32-bit memory cells R1 and R2*/
   def F():Int= {
     var W, W1, W2: Int = 0
     var  u, v: Int = 0
@@ -150,8 +153,7 @@ object zuc128_model {
     (a << 23) | (b << 8) | c
   }
 
-
-
+  /* expand LFSR key in initial mode*/
   def init_LFSR_key_exp (k: Seq[Int] , iv: Seq[Int]): ArrayBuffer[BigInt] = {
   for (i <- 0 until 16) {
     LFSR_S(i) = MAKEU31(k(i), EK_d(i), iv(i));
@@ -159,11 +161,12 @@ object zuc128_model {
     LFSR_S
   }
 
-  /* initialize */
+  /* initialization stage*/
   def Initialization(k: Seq[Int] , iv: Seq[Int]) = {
 
     var nCount: Int = 0
-    /* expand key */
+    /* The key loading procedure will expand the initial key and the initial vector into
+       16 of 31-bit integers as the initial state of the LFSR. */
     init_LFSR_key_exp(k, iv)
     /* set F_R1 and F_R2 to zero */
     for (i <- 0 until 2) {
@@ -179,6 +182,9 @@ object zuc128_model {
     }
   }
 
+  /* After the initialization stage, the algorithm moves into the working stage.
+  * Then the algorithm goes into the stage of producing keystream,
+  * i.e., for each iteration, the following operations are executed once, and a 32-bit word Z is produced as an output*/
   def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[Int] = {
     var pKeystream: ArrayBuffer[Int] = new ArrayBuffer[Int]() ++ Seq.fill(KeystreamLen)(0)
     var i: Int = 0;
