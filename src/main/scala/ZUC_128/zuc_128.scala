@@ -7,15 +7,15 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object zuc128_model {
-  /*The 16 Linear Feedback Shift Registers*/
+  /**The 16 Linear Feedback Shift Registers*/
   var LFSR_S: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(16)(BigInt(0))
-  /* the registers of the non linear function F */
+  /** the registers of the non linear function F */
     var F_R: ArrayBuffer[BigInt] = (new ArrayBuffer[BigInt]) ++ Seq.fill(2)(BigInt(0))
-  /* the outputs of BitReorganization stage*/
+  /** the outputs of BitReorganization stage*/
   var BRC_X: ArrayBuffer[Int] = (new ArrayBuffer[Int]) ++ Seq.fill(4)(0)
 
   var w: Int = 0;
-  /* the s-boxes */
+  /** the s-boxes */
   val S0: Seq[Int] = Seq(0x3e, 0x72, 0x5b, 0x47, 0xca, 0xe0, 0x00, 0x33, 0x04, 0xd1, 0x54, 0x98, 0x09, 0xb9, 0x6d, 0xcb, 0x7b, 0x1b, 0xf9, 0x32, 0xaf, 0x9d, 0x6a, 0xa5, 0xb8, 0x2d, 0xfc, 0x1d, 0x08, 0x53, 0x03, 0x90, 0x4d, 0x4e, 0x84, 0x99, 0xe4, 0xce, 0xd9, 0x91, 0xdd, 0xb6, 0x85, 0x48, 0x8b, 0x29, 0x6e, 0xac,
     0xcd, 0xc1, 0xf8, 0x1e, 0x73, 0x43, 0x69, 0xc6, 0xb5, 0xbd, 0xfd, 0x39, 0x63, 0x20, 0xd4, 0x38, 0x76, 0x7d, 0xb2, 0xa7, 0xcf, 0xed, 0x57, 0xc5, 0xf3, 0x2c, 0xbb, 0x14, 0x21, 0x06, 0x55, 0x9b,
     0xe3, 0xef, 0x5e, 0x31, 0x4f, 0x7f, 0x5a, 0xa4, 0x0d, 0x82, 0x51, 0x49, 0x5f, 0xba, 0x58, 0x1c, 0x4a, 0x16, 0xd5, 0x17, 0xa8, 0x92, 0x24, 0x1f, 0x8c, 0xff, 0xd8, 0xae, 0x2e, 0x01, 0xd3, 0xad,
@@ -47,7 +47,7 @@ object zuc128_model {
 
   val MASK = 0x7FFFFFFF
 
-  /* c = a + b mod (2^31 – 1) */
+  /** c = a + b mod (2^31 – 1) */
   def AddM(a: BigInt, b: Int): BigInt = {
     var c = a + b
     (c & MASK) + (c >> 31)
@@ -57,11 +57,7 @@ object zuc128_model {
     ((x.toInt << k) | (x.toInt >>> (31 - k))) & MASK
   }
 
-  def get_BigInt_Val(x: BigInt) = {
-    x
-}
-
-  /* LFSR with initialization mode */
+  /** LFSR with initialization mode */
   def LFSRWithInitialisationMode(u: Int) = {
     var f: BigInt = BigInt(0)
     var v: Int = 0
@@ -84,7 +80,7 @@ object zuc128_model {
     LFSR_S(15) = f
   }
 
-  /* LFSR with work mode */
+  /** LFSR with work mode */
   def LFSRWithWorkMode() = {
     var f: BigInt = BigInt(0)
     var v: Int = 0
@@ -107,7 +103,7 @@ object zuc128_model {
     LFSR_S(15) = f;
   }
 
-  /* BitReorganization
+  /** BitReorganization
   * It extracts 128 bits from the cells of the LFSR and forms 4 of 32-bit words,
   * where the first three words will be used by the nonlinear function F in the bottom layer,
   * and the last word will be involved in producing the keystream. */
@@ -134,7 +130,7 @@ object zuc128_model {
   def MAKEU32(a: Int, b: Int, c: Int, d: Int): BigInt = {
     (a << 24) | (b << 16) | (c << 8) | (d)
   }
-  /*The nonlinear function F has 2 of 32-bit memory cells R1 and R2*/
+  /**The nonlinear function F has 2 of 32-bit memory cells R1 and R2*/
   def F():Int= {
     var W, W1, W2: Int = 0
     var  u, v: Int = 0
@@ -153,7 +149,7 @@ object zuc128_model {
     (a << 23) | (b << 8) | c
   }
 
-  /* expand LFSR key in initial mode*/
+  /** expand LFSR key in initial mode*/
   def init_LFSR_key_exp (k: Seq[Int] , iv: Seq[Int]): ArrayBuffer[BigInt] = {
   for (i <- 0 until 16) {
     LFSR_S(i) = MAKEU31(k(i), EK_d(i), iv(i));
@@ -161,14 +157,14 @@ object zuc128_model {
     LFSR_S
   }
 
-  /* initialization stage*/
+  /** initialization stage*/
   def Initialization(k: Seq[Int] , iv: Seq[Int]) = {
 
     var nCount: Int = 0
-    /* The key loading procedure will expand the initial key and the initial vector into
+    /** The key loading procedure will expand the initial key and the initial vector into
        16 of 31-bit integers as the initial state of the LFSR. */
     init_LFSR_key_exp(k, iv)
-    /* set F_R1 and F_R2 to zero */
+    /** set F_R1 and F_R2 to zero */
     for (i <- 0 until 2) {
       F_R(i) = 0
     }
@@ -182,7 +178,7 @@ object zuc128_model {
     }
   }
 
-  /* After the initialization stage, the algorithm moves into the working stage.
+  /** After the initialization stage, the algorithm moves into the working stage.
   * Then the algorithm goes into the stage of producing keystream,
   * i.e., for each iteration, the following operations are executed once, and a 32-bit word Z is produced as an output*/
   def GenerateKeystream(KeystreamLen: Int): ArrayBuffer[Int] = {
@@ -190,7 +186,7 @@ object zuc128_model {
     var i: Int = 0;
     {
       BitReorganization();
-      F(); /* discard the output of F */
+      F(); /** discard the output of F */
       LFSRWithWorkMode()
     }
     for (i <- 0 until KeystreamLen) {
