@@ -45,6 +45,7 @@ case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
   val keys_num = Key_num
   val KeyLen = 8
   val KStreamlen = KSlen
+  val load_cycles = Key_num/parallelism
 }
 
 /** Interface definition of ZUC */
@@ -154,9 +155,9 @@ class zuc128(p:zucParams) extends  Module {
       }
     }
     is(zuc128.loadKey) {
-      val (count,done) = Counter(0 until p.keys_num by p.parallelism,state === zuc128.loadKey)
+      val (count,done) = Counter(0 until p.keys_num by p.load_cycles,state === zuc128.loadKey)
       /**The key loading procedure will expand the initial key and the initial vector into 16 of 31-bit integers as the initial state of the LFSR.*/
-      for (i <- 0 until p.parallelism) {
+      for (i <- 0 until p.load_cycles) {
         LFSR_S(count+ i.U) := zuc128.MAKEU31(io.in.bits.key(count + i.U), Ek_d(count + i.U), io.in.bits.IV(count + i.U))
        }
 

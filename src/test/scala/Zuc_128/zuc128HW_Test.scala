@@ -24,7 +24,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
       /** Loading Key and IV inputs to Hardware  */
       dut.io.in.bits.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
       dut.io.in.bits.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
-      dut.clock.step(2)
+      dut.clock.step(parallelism)
 
       /**After 1st clock expecting key/IV to load and R0 and R1 set to 0 */
       dut.clock.step(32)
@@ -44,12 +44,44 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     true
   }
 
+  "Hardware ZUC128 should generate correct keystream for Test Vector 1 (no parallelism)" in {
+    val key = zuc128_ScalaModelTestData1.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData1.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData1.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV , zuc128_ScalaModelTestData1.KSlen, outkeystream,16,1)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 2 (no parallelism)" in {
+    val key = zuc128_ScalaModelTestData2.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData2.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData2.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key,IV,zuc128_ScalaModelTestData2.KSlen,outkeystream,16,1)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 3 (no parallelism)" in {
+    val key = zuc128_ScalaModelTestData3.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData3.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData3.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV,zuc128_ScalaModelTestData3.KSlen,outkeystream,16,1)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 4 (no parallelism)" in {
+    val key = zuc128_ScalaModelTestData4.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData4.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData4.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV,zuc128_ScalaModelTestData4.KSlen,outkeystream,16,1)
+  }
+
   "Hardware ZUC128 should generate correct keystream for Test Vector 1" in {
     val key = zuc128_ScalaModelTestData1.key.map(_.U)
     val IV = zuc128_ScalaModelTestData1.IV.map(_.U)
     val outkeystream = zuc128_ScalaModelTestData1.Z_post_gen.map(_.S)
     /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
-    testZUC128(key, IV , zuc128_ScalaModelTestData1.KSlen, outkeystream,16,16)
+    testZUC128(key, IV , zuc128_ScalaModelTestData1.KSlen, outkeystream,16,2)
   }
 
   "Hardware ZUC128 should generate correct keystream for Test Vector 2" in {
@@ -57,7 +89,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     val IV = zuc128_ScalaModelTestData2.IV.map(_.U)
     val outkeystream = zuc128_ScalaModelTestData2.Z_post_gen.map(_.S)
     /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
-    testZUC128(key,IV,zuc128_ScalaModelTestData2.KSlen,outkeystream,16,16)
+    testZUC128(key,IV,zuc128_ScalaModelTestData2.KSlen,outkeystream,16,2)
   }
 
   "Hardware ZUC128 should generate correct keystream for Test Vector 3" in {
@@ -65,7 +97,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     val IV = zuc128_ScalaModelTestData3.IV.map(_.U)
     val outkeystream = zuc128_ScalaModelTestData3.Z_post_gen.map(_.S)
     /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
-    testZUC128(key, IV,zuc128_ScalaModelTestData3.KSlen,outkeystream,16,16)
+    testZUC128(key, IV,zuc128_ScalaModelTestData3.KSlen,outkeystream,16,2)
   }
 
   "Hardware ZUC128 should generate correct keystream for Test Vector 4" in {
@@ -73,7 +105,38 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
     val IV = zuc128_ScalaModelTestData4.IV.map(_.U)
     val outkeystream = zuc128_ScalaModelTestData4.Z_post_gen.map(_.S)
     /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
-    testZUC128(key, IV,zuc128_ScalaModelTestData4.KSlen,outkeystream,16,16)
+    testZUC128(key, IV,zuc128_ScalaModelTestData4.KSlen,outkeystream,16,2)
   }
 
+  "Hardware ZUC128 should generate correct keystream for Test Vector 1 (full parallelism; minimum HW requirement)" in {
+    val key = zuc128_ScalaModelTestData1.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData1.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData1.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV , zuc128_ScalaModelTestData1.KSlen, outkeystream,16,16)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 2 (full parallelism; minimum HW requirement)" in {
+    val key = zuc128_ScalaModelTestData2.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData2.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData2.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key,IV,zuc128_ScalaModelTestData2.KSlen,outkeystream,16,16)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 3 (full parallelism; minimum HW requirement)" in {
+    val key = zuc128_ScalaModelTestData3.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData3.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData3.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV,zuc128_ScalaModelTestData3.KSlen,outkeystream,16,16)
+  }
+
+  "Hardware ZUC128 should generate correct keystream for Test Vector 4 (full parallelism; minimum HW requirement)" in {
+    val key = zuc128_ScalaModelTestData4.key.map(_.U)
+    val IV = zuc128_ScalaModelTestData4.IV.map(_.U)
+    val outkeystream = zuc128_ScalaModelTestData4.Z_post_gen.map(_.S)
+    /** For 128 bit(16 bytes) keys key_num is 16; so if you want to make it ZUC 256 , key_num will be 32*/
+    testZUC128(key, IV,zuc128_ScalaModelTestData4.KSlen,outkeystream,16,16)
+  }
 }
