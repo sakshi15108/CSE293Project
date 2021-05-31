@@ -46,7 +46,7 @@ case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
   val KeyLen = 8
   val KStreamlen = KSlen
   val load_cycles = Key_num/parallelism
-  val init_cycles = 32
+  val init_cycles = 32 /** This is hardcoded for zuc 128 implementation as per specs of init-mode.*/
 }
 
 /** Interface definition of ZUC */
