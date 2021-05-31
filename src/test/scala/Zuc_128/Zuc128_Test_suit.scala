@@ -1,12 +1,7 @@
 package ZUC_128
 
-import chisel3._
 import chisel3.tester._
 import org.scalatest.FreeSpec
-import treadle._
-import chisel3.tester.experimental.TestOptionBuilder._
-
-import scala.collection.mutable.ArrayBuffer
 
 object zuc128_ScalaModelTestData1{
   val key : Seq[Int] = Seq(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ,0x00,0x00)
@@ -137,7 +132,6 @@ class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
     assert(zuc128_model.GenerateKeystream(zuc128_ScalaModelTestData1.KSlen) == zuc128_ScalaModelTestData1.Z_post_gen)
   }
 
-
   "Initial LFSR value for the initialization mode. TC:2" in {
     assert(zuc128_model.init_LFSR_key_exp(zuc128_ScalaModelTestData2.key, zuc128_ScalaModelTestData2.IV) == zuc128_ScalaModelTestData2.LFSR_init)
   }
@@ -187,7 +181,6 @@ class ZUC_128_ModelTester extends FreeSpec with ChiselScalatestTester {
     zuc128_model.Initialization(zuc128_ScalaModelTestData3.key, zuc128_ScalaModelTestData3.IV)
     assert(zuc128_model.GenerateKeystream(zuc128_ScalaModelTestData3.KSlen) == zuc128_ScalaModelTestData3.Z_post_gen)
   }
-
 
   "Initial LFSR value for the initialization mode. TC:4" in {
     assert(zuc128_model.init_LFSR_key_exp(zuc128_ScalaModelTestData4.key, zuc128_ScalaModelTestData4.IV) == zuc128_ScalaModelTestData4.LFSR_init)

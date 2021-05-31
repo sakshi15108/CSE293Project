@@ -46,6 +46,7 @@ case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
   val KeyLen = 8
   val KStreamlen = KSlen
   val load_cycles = Key_num/parallelism
+  val init_cycles = 32
 }
 
 /** Interface definition of ZUC */
@@ -173,7 +174,7 @@ class zuc128(p:zucParams) extends  Module {
     }
     is(zuc128.initMode) {
       /**Then the cipher runs the following operations 32 times*/
-      val nCount = RegInit(32.U)
+      val nCount = RegInit(p.init_cycles.U)
       when(nCount > 0.U && state === zuc128.initMode) {
 
         BitReorganization()
