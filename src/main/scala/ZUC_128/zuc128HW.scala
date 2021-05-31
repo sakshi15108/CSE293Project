@@ -40,9 +40,9 @@ object  zuc128 {
 /** Parameters to define the size of Input and Output ports size
  * can be modified if we need to implement for different Input Key size (ex: 256 bit for ZUC256)
  * also by providing different KSlen value, KeyStream of that many words can be generated as Output*/
-case class zucParams(KSlen: Int) {
-  val LFSR_wordSize = 32
-  val keys_num = 16
+case class zucParams(KSlen: Int,Key_num :Int) {
+  val KeyStream_wordsize = 32
+  val keys_num = Key_num
   val KeyLen = 8
   val KStreamlen = KSlen
 }
@@ -53,7 +53,7 @@ class zuc128IO(p: zucParams) extends Bundle {
   val key = Vec(p.keys_num, UInt((p.KeyLen).W))
   val IV = Vec(p.keys_num, UInt((p.KeyLen).W))
   }))
-  val KeyStream = Decoupled(SInt(p.LFSR_wordSize.W))
+  val KeyStream = Decoupled(SInt(p.KeyStream_wordsize.W))
   override def cloneType = (new zuc128IO(p)).asInstanceOf[this.type]
 }
 
@@ -62,11 +62,11 @@ class zuc128(p:zucParams) extends  Module {
   val io = IO(new zuc128IO(p))
 
   /**The 16 Linear Feedback Shift Registers**/
-  val LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(p.LFSR_wordSize.W)))
+  val LFSR_S: Vec[UInt] = Reg(Vec(16, UInt(p.KeyStream_wordsize.W)))
   /** the registers of the non linear function F **/
-  val F_R: Vec[SInt] = Reg(Vec(2, SInt(p.LFSR_wordSize.W)))
+  val F_R: Vec[SInt] = Reg(Vec(2, SInt(p.KeyStream_wordsize.W)))
   /** the outputs of BitReorganization **/
-  val BRC_X: Vec[SInt] = WireInit(VecInit(Seq.fill(4)(0.S(p.LFSR_wordSize.W))))
+  val BRC_X: Vec[SInt] = WireInit(VecInit(Seq.fill(4)(0.S(p.KeyStream_wordsize.W))))
   /** Obtaining S boxes from Scala implementation and mapping them for Chisel implementation**/
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
