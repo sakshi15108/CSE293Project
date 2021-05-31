@@ -154,17 +154,21 @@ class zuc128(p:zucParams) extends  Module {
       }
     }
     is(zuc128.loadKey) {
-      val (count,done) = Counter(0 until p.keys_num by p.parallelism,state === zuc128.loadKey,io.in.valid && io.in.ready)
+      val (count,done) = Counter(0 until p.keys_num by p.parallelism,state === zuc128.loadKey)
       /**The key loading procedure will expand the initial key and the initial vector into 16 of 31-bit integers as the initial state of the LFSR.*/
       for (i <- 0 until p.parallelism) {
-        LFSR_S(count+ i.U) := zuc128.MAKEU31(io.in.bits.key(count + i.U), Ek_d(count + i.U), io.in.bits.IV(count + i.U));
-      }
+        LFSR_S(count+ i.U) := zuc128.MAKEU31(io.in.bits.key(count + i.U), Ek_d(count + i.U), io.in.bits.IV(count + i.U))
+       }
 
       /* set F_R1 and F_R2 to zero */
       for (i <- 0 until 2) {
         F_R(i) := 0.S
       }
-      state := zuc128.initMode
+      when(done){
+        state := zuc128.initMode
+      }.otherwise{
+        state := zuc128.loadKey
+      }
     }
     is(zuc128.initMode) {
       /**Then the cipher runs the following operations 32 times*/

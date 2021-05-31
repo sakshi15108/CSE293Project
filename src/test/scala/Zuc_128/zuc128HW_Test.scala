@@ -24,14 +24,7 @@ class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
       /** Loading Key and IV inputs to Hardware  */
       dut.io.in.bits.key.zip(Key).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
       dut.io.in.bits.IV.zip(Iv).foreach{ case (dutIO, elem) => dutIO.poke(elem) }
-      dut.clock.step()
-
-//      dut.io.in.bits.key.zipWithIndex foreach { case(dut_key, key_indx) =>
-//        dut_key.poke(Key(key_indx))
-//        dut.io.in.bits.IV(key_indx).poke(Iv(key_indx))
-//        dut.clock.step(Key_num/parallelism)
-//      }
-
+      dut.clock.step(2)
 
       /**After 1st clock expecting key/IV to load and R0 and R1 set to 0 */
       dut.clock.step(32)
