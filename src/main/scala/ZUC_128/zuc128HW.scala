@@ -40,7 +40,7 @@ object  zuc128 {
 /** Parameters to define the size of Input and Output ports size
  * can be modified if we need to implement for different Input Key size (ex: 256 bit for ZUC256)
  * also by providing different KSlen value, KeyStream of that many words can be generated as Output*/
-case class zucParams(KSlen: Int,Key_num :Int) {
+case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
   val KeyStream_wordsize = 32
   val keys_num = Key_num
   val KeyLen = 8
@@ -70,6 +70,7 @@ class zuc128(p:zucParams) extends  Module {
   /** Obtaining S boxes from Scala implementation and mapping them for Chisel implementation**/
   val S0 = VecInit(zuc128_model.S0.map(_.U))
   val S1 = VecInit(zuc128_model.S1.map(_.U))
+  val Ek_d = VecInit(zuc128_model.EK_d.map(_.U))
   val w: SInt = WireInit(0.S)
 
   /** LFSR with initialization mode **/
@@ -153,10 +154,12 @@ class zuc128(p:zucParams) extends  Module {
       }
     }
     is(zuc128.loadKey) {
+      val (count,done) = Counter(0 until p.keys_num by p.parallelism,state === zuc128.loadKey,io.in.valid && io.in.ready)
       /**The key loading procedure will expand the initial key and the initial vector into 16 of 31-bit integers as the initial state of the LFSR.*/
-      for (i <- 0 until 16) {
-        LFSR_S(i) := zuc128.MAKEU31(io.in.bits.key(i), zuc128_model.EK_d(i).asUInt(), io.in.bits.IV(i));
+      for (i <- 0 until p.parallelism) {
+        LFSR_S(count+ i.U) := zuc128.MAKEU31(io.in.bits.key(count + i.U), Ek_d(count + i.U), io.in.bits.IV(count + i.U));
       }
+
       /* set F_R1 and F_R2 to zero */
       for (i <- 0 until 2) {
         F_R(i) := 0.S
