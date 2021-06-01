@@ -46,6 +46,7 @@ case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
   val KeyLen = 8
   val KStreamlen = KSlen
   val load_cycles = Key_num/parallelism
+  assert(keys_num%load_cycles==0, "CHECK:the parallelism number set does not cover the entire input")
   val init_cycles = 32 /** This is hardcoded for zuc 128 implementation as per specs of init-mode.*/
 }
 
