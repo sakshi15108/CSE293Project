@@ -10,10 +10,10 @@ import scala.collection.mutable.ArrayBuffer
 
 class ZUC128Tester extends FreeSpec with ChiselScalatestTester {
 
-  def testZUC128(Key : Seq[UInt], Iv : Seq[UInt], keystreamlen : Int , outkeystream : Seq[SInt],Key_num : Int,parallelism :Int): Boolean = {
-    assert(Key.length == Key_num)
-    assert(Iv.length == Key_num)
-    val p = zucParams(keystreamlen,Key_num,parallelism)
+  def testZUC128(Key : Seq[UInt], Iv : Seq[UInt], keystreamlen : Int , outkeystream : Seq[SInt],Key_len : Int,parallelism :Int): Boolean = {
+    assert(Key.length == Key_len)
+    assert(Iv.length == Key_len)
+    val p = zucParams(keystreamlen,Key_len,parallelism)
     test(new zuc128(p)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       /** Idle state of Hardware */

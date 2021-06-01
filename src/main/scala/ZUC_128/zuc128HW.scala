@@ -40,12 +40,11 @@ object  zuc128 {
 /** Parameters to define the size of Input and Output ports size
  * can be modified if we need to implement for different Input Key size (ex: 256 bit for ZUC256)
  * also by providing different KSlen value, KeyStream of that many words can be generated as Output*/
-case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
+case class zucParams(KSlen: Int,Key_len :Int,parallelism :Int) {
   val KeyStream_wordsize = 32
-  val keys_num = Key_num
-  val KeyLen = 8
+  val keys_num = Key_len
   val KStreamlen = KSlen
-  val load_cycles = Key_num/parallelism
+  val load_cycles = keys_num/parallelism
   assert(keys_num%load_cycles==0, "CHECK:the parallelism number set does not cover the entire input")
   val init_cycles = 32 /** This is hardcoded for zuc 128 implementation as per specs of init-mode.*/
 }
@@ -53,8 +52,8 @@ case class zucParams(KSlen: Int,Key_num :Int,parallelism :Int) {
 /** Interface definition of ZUC */
 class zuc128IO(p: zucParams) extends Bundle {
   val in = Flipped(Decoupled(new Bundle() {
-  val key = Vec(p.keys_num, UInt((p.KeyLen).W))
-  val IV = Vec(p.keys_num, UInt((p.KeyLen).W))
+  val key = Vec(p.keys_num, UInt(8.W))
+  val IV = Vec(p.keys_num, UInt(8.W))
   }))
   val KeyStream = Decoupled(SInt(p.KeyStream_wordsize.W))
   override def cloneType = (new zuc128IO(p)).asInstanceOf[this.type]
