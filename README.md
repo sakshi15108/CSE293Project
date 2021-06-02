@@ -26,7 +26,8 @@ Following are the details (internal working of algorithm) of Chisel implementati
 
    idle       : In reset state or when the KeyStream genration is done.
                    
-   loadKey    : System is ready and takes in all the inputs in single cycle. Also, it initializes 16 LFSR(Linear feedback shift registers) registers.
+   loadKey    : System is ready and takes in all the inputs in load_cycle cycles.It initializes 16 LFSR(Linear feedback shift registers) registers and set F_R registers to 0.
+                We have parallelized the loading of inputs into multiple cycle upto 16 to load 16 LSFR registers from Input Key, IV and constant Ek_d.
 
    initMode   : After loadKey, cipher enters initMode and iterates through following stages 32 times (32 cycles).
                 Breaks down the Input into 4 words (BitReorganization) and use it within a non-Linear function (F) and LFSR to generate the KeyStream. The function F transforms
