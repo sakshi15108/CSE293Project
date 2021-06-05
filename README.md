@@ -3,12 +3,12 @@ ZUC-128 (3GPP LTE Stream  Cipher)
 
 This is a Chisel implementation of ZUC-128 (a 3GPP LTE Stream  Cipher) used in 4G networks security. 
 
-Called also as Zu Chongzhi’s cipher, ZUC-128 stream cipher is designed on the basis of 128-bit key. Including encryption algorithm 128-EEA3 and integrity algorithm 128-EIA3, it is mainly used for data encryption and integrity protection of mobile communication systems. 
+Called also as Zu Chongzhi’s cipher, ZUC-128 stream cipher is designed on the basis of 128-bit key. Including encryption algorithm 128-EEA3 and integrity algorithm 128-EIA3, it is mainly used for data encryption and integrity protection of mobile communication systems. It has high performance and low latency suitable for 4G network speed. 
 
 ZUC is a stream cipher that forms the heart of the 3GPP confidentiality algorithm 128-EEA3 and the 3GPP integrity algorithm 128-EIA3, offering reliable security services in Long Term Evolution networks (LTE). It is used for data encryption and integrity protection of mobile communication systems and provide message encryption and ID authentication.
 
 In September 2011, ZUC-128 was approved as the LTE international standard cipher for 3GPP at the 53rd 3GPP Meeting for System Architecture Group held at Fukuoka, Japan which is compatible with 4G.
-Stream cipher ZUC plays a crucial role in the next generation of mobile communication as it has already been included by the 3GPP LTE-Advanced, which is a candidate standard for the 4G network. 
+Stream cipher ZUC 128 plays a crucial role in the next generation of mobile communication as it has already been included by the 3GPP LTE-Advanced, which is a candidate standard for the 4G network. Further it has been extended as ZUC 256 which is candidate for 5G mobile communication network.
 
 **Project details:**
 
@@ -74,4 +74,8 @@ If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Te
 [[3].](https://www.gsma.com/security/wp-content/uploads/2019/05/eea3eia3testdatav11.pdf) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 3: Implementor’s Test Data
 
 [[4].](http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228) http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228
+
+**Presentation:**
+The details of interface, parameters, state machine and other details are explained in below presentation:
+https://github.com/sakshi15108/CSE293Project/blob/main/ZUC_128.pdf
 
