@@ -65,7 +65,7 @@ If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Te
 3.	Chisel Implementation: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc128HW.scala
 4.	Chisel test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/zuc128HW_Test.scala
 
-**References:**
+**References and Links:**
 
 [[1].](https://www.gsma.com/security/wp-content/uploads/2019/05/EEA3_EIA3_specification_v1_8.pdf) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 1: 128-EEA3 and 128-EIA3 Specifications.
 
@@ -73,4 +73,5 @@ If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Te
 
 [[3].](https://www.gsma.com/security/wp-content/uploads/2019/05/eea3eia3testdatav11.pdf) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 3: Implementor’s Test Data
 
-[4] ZUC-256 Stream Cipher, Journal of Cryptologic Research, 2018. ISSN 2095-7025 CN 10-1195/TN
+[[4].](http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228) http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228
+
