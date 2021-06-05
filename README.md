@@ -1,11 +1,7 @@
-Chisel Project For CSE293
+ZUC-128 (3GPP LTE Stream  Cipher)
 =========================
 
-Following are the deliverables:
-1.	Scala model: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc_128.scala
-2.	Scala test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/Zuc128_Test_suit.scala
-3.	Chisel Implementation: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc128HW.scala
-4.	Chisel test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/zuc128HW_Test.scala
+This is a Chisel implementation of ZUC-128 (a 3GPP LTE Stream  Cipher) used in 4G networks security.
 
 **Project details:**
 
@@ -56,6 +52,11 @@ The basic working algorithm has been [implemented in Chisel](https://github.com/
 Testing of this implementation can be executed by running: ``testOnly ZUC_128.ZUC128Tester``.
 If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Tester -- -t "<name of the test>"``. For example: ``testOnly ZUC_128.ZUC128Tester -- -t "Hardware ZUC128 should generate correct keystream for Test Vector 1"``will run [a test for test case 1](https://github.com/sakshi15108/CSE293Project/blob/27ac44f4a0284a8d5d15e276e60407ee0dc4ef92/src/test/scala/Zuc_128/zuc128HW_Test.scala#L43).
 
+**Following are the deliverables:**
+1.	Scala model: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc_128.scala
+2.	Scala test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/Zuc128_Test_suit.scala
+3.	Chisel Implementation: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc128HW.scala
+4.	Chisel test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/zuc128HW_Test.scala
 
 **References:**
 
