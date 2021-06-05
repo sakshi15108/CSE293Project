@@ -1,11 +1,14 @@
-Chisel Project For CSE293
+ZUC-128 (3GPP LTE Stream  Cipher)
 =========================
 
-Following are the deliverables:
-1.	Scala model: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc_128.scala
-2.	Scala test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/Zuc128_Test_suit.scala
-3.	Chisel Implementation: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc128HW.scala
-4.	Chisel test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/zuc128HW_Test.scala
+This is a Chisel implementation of ZUC-128 (a 3GPP LTE Stream  Cipher) used in 4G networks security. 
+
+Called also as Zu Chongzhi’s cipher, ZUC-128 stream cipher is designed on the basis of 128-bit key. Including encryption algorithm 128-EEA3 and integrity algorithm 128-EIA3, it is mainly used for data encryption and integrity protection of mobile communication systems. 
+
+ZUC is a stream cipher that forms the heart of the 3GPP confidentiality algorithm 128-EEA3 and the 3GPP integrity algorithm 128-EIA3, offering reliable security services in Long Term Evolution networks (LTE). It is used for data encryption and integrity protection of mobile communication systems and provide message encryption and ID authentication.
+
+In September 2011, ZUC-128 was approved as the LTE international standard cipher for 3GPP at the 53rd 3GPP Meeting for System Architecture Group held at Fukuoka, Japan which is compatible with 4G.
+Stream cipher ZUC plays a crucial role in the next generation of mobile communication as it has already been included by the 3GPP LTE-Advanced, which is a candidate standard for the 4G network. 
 
 **Project details:**
 
@@ -18,7 +21,7 @@ The execution of ZUC has two stages: initialization stage and working stage. In 
 
 We have completed the Scala implementation along with necessary helper functions and testing with stages broken down into testing the input to all stages(LFSR, F(), before and after initialization mode). Finally the required output (keystream) generated is tested.
 
-For our Chisel implementation, we have used FSM and plan to make the IO decoupled in order to enable its smooth interfacing with any bigger application like 3GPP Confidentiality and Integrity Algorithms. Since the scope of this project limits implementation of applications using the Stream Cipher, we intend to make the ZUC-128 Stream Cipher well enough to be used as a submodule without requiring changes for interfacing with any application module.
+For our Chisel implementation, we have used FSM and have made the IO decoupled in order to enable its smooth interfacing with any bigger application like 3GPP Confidentiality and Integrity Algorithms. Since the scope of this project limits implementation of applications using the Stream Cipher, we intend to make the ZUC-128 Stream Cipher well enough to be used as a submodule without requiring changes for interfacing with any application module.
 
 Following are the details (internal working of algorithm) of Chisel implementation:
 
@@ -26,7 +29,8 @@ Following are the details (internal working of algorithm) of Chisel implementati
 
    idle       : In reset state or when the KeyStream genration is done.
                    
-   loadKey    : System is ready and takes in all the inputs in single cycle. Also, it initializes 16 LFSR(Linear feedback shift registers) registers.
+   loadKey    : System is ready and takes in all the inputs in load_cycle cycles.It initializes 16 LFSR(Linear feedback shift registers) registers and set F_R registers to 0.
+                We have parallelized the loading of inputs into multiple cycle upto 16 to load 16 LSFR registers from Input Key, IV and constant Ek_d.
 
    initMode   : After loadKey, cipher enters initMode and iterates through following stages 32 times (32 cycles).
                 Breaks down the Input into 4 words (BitReorganization) and use it within a non-Linear function (F) and LFSR to generate the KeyStream. The function F transforms
@@ -35,8 +39,7 @@ Following are the details (internal working of algorithm) of Chisel implementati
                 
    workMode   : After initialization operation is done, it does further tranformations on the hardware components listed below in order to generate keystream in next stage. This state is for 1 clock cycle.
 
-   genKeystream : This stage generates 1 keystream in each cyle. So, this stage operates for "keystreamlength" number of cycles to generate keys as many as 
-                  Keystreamlength number. Current implementation of Chisel has Keystreamlength = 1. We plan to parametrize the implementation to support variable number of Keystreamlength.
+   genKeystream : This stage generates each word of keystream in each cyle. So, this stage operates for "keystreamlength" number of cycles to generate each word of KeyStream at each cycle. We have parametrized the implementation to support variable number of Keystreamlength and tested with all test vectors upto length 32.
                   
  Hardware components involved in implemenation:
   1) LFSR_S(16) 
@@ -56,11 +59,19 @@ The basic working algorithm has been [implemented in Chisel](https://github.com/
 Testing of this implementation can be executed by running: ``testOnly ZUC_128.ZUC128Tester``.
 If you want to execute individual tests, you can run ``testOnly ZUC_128.ZUC128Tester -- -t "<name of the test>"``. For example: ``testOnly ZUC_128.ZUC128Tester -- -t "Hardware ZUC128 should generate correct keystream for Test Vector 1"``will run [a test for test case 1](https://github.com/sakshi15108/CSE293Project/blob/27ac44f4a0284a8d5d15e276e60407ee0dc4ef92/src/test/scala/Zuc_128/zuc128HW_Test.scala#L43).
 
+**Following are the deliverables:**
+1.	Scala model: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc_128.scala
+2.	Scala test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/Zuc128_Test_suit.scala
+3.	Chisel Implementation: https://github.com/sakshi15108/CSE293Project/blob/main/src/main/scala/ZUC_128/zuc128HW.scala
+4.	Chisel test: https://github.com/sakshi15108/CSE293Project/blob/main/src/test/scala/Zuc_128/zuc128HW_Test.scala
 
-**References:**
+**References and Links:**
 
 [[1].](https://www.gsma.com/security/wp-content/uploads/2019/05/EEA3_EIA3_specification_v1_8.pdf) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 1: 128-EEA3 and 128-EIA3 Specifications.
 
 [[2].](http://www.gsma.com/aboutus/wp-content/uploads/2014/12/eea3eia3zucv16.pdf)) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 2: ZUC Specification.
 
 [[3].](https://www.gsma.com/security/wp-content/uploads/2019/05/eea3eia3testdatav11.pdf) Specification of the 3GPP Confidentiality and Integrity Algorithms 128-EEA3 & 128-EIA3. Document 3: Implementor’s Test Data
+
+[[4].](http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228) http://www.jcr.cacrnet.org.cn/EN/10.13868/j.cnki.jcr.000228
+
